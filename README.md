@@ -1,4 +1,4 @@
-# Travel Policy Intelligence RAG (Portfolio Project)
+# Travel Policy Extraction RAG
 
 Production-grade RAG system for travel fare-rule and penalty policy intelligence across airlines and suppliers.
 
