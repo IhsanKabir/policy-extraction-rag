@@ -1,0 +1,1097 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Policy Labeling UI</title>
+  <style>
+    :root {
+      --bg: #f4f0e8;
+      --panel: #fffdf7;
+      --ink: #1b1f22;
+      --muted: #5b6670;
+      --line: #d6d1c6;
+      --accent: #004e64;
+      --accent-2: #00a896;
+      --warn: #b02a37;
+      --ok: #2d6a4f;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      --sans: "Segoe UI", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--sans);
+      color: var(--ink);
+      background: radial-gradient(circle at 0% 0%, #fff8e8 0%, var(--bg) 55%, #ece7dc 100%);
+    }
+    .app {
+      display: grid;
+      grid-template-columns: 340px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+    .sidebar {
+      border-right: 1px solid var(--line);
+      background: linear-gradient(180deg, #faf6ed, #f2ede3);
+      padding: 12px;
+      overflow: auto;
+    }
+    .main {
+      padding: 14px;
+      overflow: auto;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.03);
+    }
+    .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .row + .row { margin-top: 8px; }
+    .grow { flex: 1; }
+    h1 { margin: 0 0 6px; font-size: 20px; }
+    h2 { margin: 0 0 8px; font-size: 14px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+    .muted { color: var(--muted); font-size: 12px; }
+    .mini-stats { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+    .mini-stat {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.7);
+      padding: 6px 8px;
+      font-size: 12px;
+    }
+    .progress {
+      width: 100%;
+      height: 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #f1ede4;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      transition: width 120ms ease-out;
+    }
+    button, select, input, textarea {
+      font: inherit;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px 10px;
+      background: #fff;
+      color: inherit;
+    }
+    button {
+      cursor: pointer;
+      background: linear-gradient(180deg, #fff, #f4f4f4);
+    }
+    button.primary {
+      background: linear-gradient(180deg, #0d6c89, var(--accent));
+      border-color: #0a5a72;
+      color: white;
+    }
+    button.good {
+      background: linear-gradient(180deg, #3f8f6a, var(--ok));
+      color: #fff;
+      border-color: #2a5c43;
+    }
+    button.ghost {
+      background: transparent;
+    }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .queue-item {
+      width: 100%;
+      text-align: left;
+      background: #fff;
+      margin-bottom: 8px;
+      border-radius: 10px;
+      padding: 10px;
+      border: 1px solid var(--line);
+    }
+    .queue-item.active { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(0, 78, 100, 0.15); }
+    .badge {
+      display: inline-block;
+      font-size: 11px;
+      border-radius: 999px;
+      padding: 2px 8px;
+      border: 1px solid var(--line);
+      background: #f8f8f8;
+      margin-right: 4px;
+    }
+    .badge.done { background: #e8f4ee; border-color: #b5d8c6; color: #1f5b3f; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .field label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    .field input, .field select, .field textarea { width: 100%; }
+    .field textarea { min-height: 72px; resize: vertical; }
+    .repeat-list {
+      display: grid;
+      gap: 8px;
+    }
+    .repeat-row {
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      padding: 8px;
+      background: #fffdfa;
+    }
+    .repeat-row-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .repeat-row-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 8px;
+    }
+    .repeat-row .field label {
+      font-size: 11px;
+    }
+    .wide { grid-column: 1 / -1; }
+    pre {
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      background: #fbfbfb;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+    .split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .status {
+      font-size: 12px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: #fff;
+    }
+    .status.error { border-color: #efc2c7; background: #fff2f4; color: var(--warn); }
+    .status.ok { border-color: #bfe2ce; background: #eef9f3; color: var(--ok); }
+    .shortcut-legend {
+      margin-top: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      position: relative;
+    }
+    .shortcut-help-btn {
+      width: 20px;
+      height: 20px;
+      border-radius: 999px;
+      padding: 0;
+      line-height: 18px;
+      text-align: center;
+      font-weight: 700;
+      color: var(--accent);
+      background: #fff;
+      border: 1px solid var(--line);
+    }
+    .shortcut-tooltip {
+      position: absolute;
+      left: 0;
+      top: calc(100% + 6px);
+      width: min(320px, calc(100vw - 40px));
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: #fffef9;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.08);
+      font-size: 12px;
+      color: var(--ink);
+      display: none;
+      z-index: 20;
+    }
+    .shortcut-tooltip code {
+      font-family: var(--mono);
+      background: #f6f3ea;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 1px 4px;
+    }
+    .shortcut-tooltip .tip-row + .tip-row { margin-top: 4px; }
+    .shortcut-legend:hover .shortcut-tooltip,
+    .shortcut-legend:focus-within .shortcut-tooltip {
+      display: block;
+    }
+    @media (max-width: 1000px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar { border-right: 0; border-bottom: 1px solid var(--line); max-height: 42vh; }
+      .grid, .split { grid-template-columns: 1fr; }
+      .repeat-row-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="card">
+        <h1>Manual Labeling</h1>
+        <div class="muted" id="queueMeta">Loading queue...</div>
+        <div class="progress" aria-label="Labeling progress">
+          <div class="progress-fill" id="queueProgressFill"></div>
+        </div>
+        <div class="mini-stats">
+          <div class="mini-stat" id="statLabeled">Labeled: 0</div>
+          <div class="mini-stat" id="statSkipped">Skipped: 0</div>
+          <div class="mini-stat" id="statUnlabeled">Unlabeled: 0</div>
+        </div>
+        <div class="row" style="margin-top:10px;">
+          <button class="ghost" id="reloadBtn">Reload</button>
+          <label class="row muted" style="margin-left:auto;">
+            <input type="checkbox" id="showLabeledChk" checked>
+            Show labeled
+          </label>
+        </div>
+        <div class="row" style="margin-top:8px;">
+          <button id="prevBtn">Prev</button>
+          <button id="nextBtn">Next</button>
+          <button class="good" id="nextUnlabeledBtn">Next Unlabeled</button>
+        </div>
+      </div>
+      <div id="queueList" style="margin-top:12px;"></div>
+    </aside>
+
+    <main class="main">
+      <div class="card">
+        <div id="statusBox" class="status">Ready.</div>
+      </div>
+
+      <div class="card" style="margin-top:12px;">
+        <h2>Record</h2>
+        <div id="recordHeader" class="muted">No record selected</div>
+        <div class="split" style="margin-top:10px;">
+          <div>
+            <div class="muted" style="margin-bottom:4px;">Chunk Text</div>
+            <pre id="chunkText"></pre>
+          </div>
+          <div>
+            <div class="muted" style="margin-bottom:4px;">Clause Text</div>
+            <pre id="clauseText"></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:12px;">
+        <h2>Manual Label</h2>
+        <div class="grid">
+          <div class="field"><label>Policy Topic</label>
+            <select id="policy_topic">
+              <option value="">(empty)</option>
+              <option>refund</option>
+              <option>reissue_change</option>
+              <option>no_show</option>
+              <option>go_show</option>
+              <option>cancellation</option>
+              <option>waiver</option>
+              <option>other</option>
+            </select>
+          </div>
+          <div class="field"><label>Action</label>
+            <select id="action">
+              <option value="">(empty)</option>
+              <option>allowed</option>
+              <option>not_allowed</option>
+              <option>conditional</option>
+              <option>unknown</option>
+            </select>
+          </div>
+          <div class="field"><label>Penalty Type</label>
+            <select id="penalty_type">
+              <option value="">(empty)</option>
+              <option>fixed_amount</option>
+              <option>percentage</option>
+              <option>forfeiture</option>
+              <option>free</option>
+              <option>fare_difference_only</option>
+              <option>tax_only</option>
+              <option>mixed</option>
+              <option>unknown</option>
+            </select>
+          </div>
+          <div class="field"><label>Penalty Amount</label><input id="penalty_amount" type="number" step="0.01"></div>
+          <div class="field"><label>Penalty Currency</label><input id="penalty_currency" type="text" placeholder="USD"></div>
+          <div class="field"><label>Penalty Percent</label><input id="penalty_percent" type="number" step="0.01"></div>
+          <div class="field"><label>Fare Difference Required</label>
+            <select id="fare_difference_required">
+              <option value="">(empty)</option>
+              <option value="true">true</option>
+              <option value="false">false</option>
+            </select>
+          </div>
+          <div class="field"><label>Time Window</label><input id="time_window" type="text" placeholder="before departure"></div>
+          <div class="field"><label>Before/After Departure</label>
+            <select id="before_after_departure">
+              <option value="">(empty)</option>
+              <option>before_departure</option>
+              <option>after_departure</option>
+              <option>both</option>
+              <option>not_applicable</option>
+              <option>unknown</option>
+            </select>
+          </div>
+          <div class="field"><label>Tax Refund Rule</label><input id="tax_refund_rule" type="text" placeholder="taxes refundable"></div>
+          <div class="field wide">
+            <label>Penalty Tiers (time-based, optional)</label>
+            <div id="penaltyTierRows" class="repeat-list"></div>
+            <div class="row" style="margin-top:8px;">
+              <button id="addPenaltyTierBtn">+ Add Tier</button>
+              <button id="addCommonTierTemplateBtn">+ Add 72h/24h/No-show Template</button>
+            </div>
+            <div class="muted">Use one row per time window when fees vary (for example: 72h before, within 72h, no-show).</div>
+          </div>
+          <div class="field wide">
+            <label>Refund Payout Options (optional)</label>
+            <div id="refundOptionRows" class="repeat-list"></div>
+            <div class="row" style="margin-top:8px;">
+              <button id="addRefundOptionBtn">+ Add Refund Option</button>
+              <button id="addCashCreditTemplateBtn">+ Add Cash vs Credit Template</button>
+            </div>
+            <div class="muted">Capture cases like original payment refund vs travel credit voucher with different fees.</div>
+          </div>
+          <div class="field wide"><label>Eligibility Conditions (one per line)</label><textarea id="eligibility_conditions"></textarea></div>
+          <div class="field wide"><label>Exceptions (one per line)</label><textarea id="exceptions"></textarea></div>
+          <div class="field wide"><label>Notes</label><textarea id="notes"></textarea></div>
+        </div>
+        <div class="row" style="margin-top:10px;">
+          <button class="primary" id="saveBtn">Save Label</button>
+          <button class="good" id="saveNextBtn">Save + Next Unlabeled</button>
+          <button id="skipBtn">Mark Skip</button>
+          <button id="skipNextBtn">Skip + Next Unlabeled</button>
+          <button id="loadHeuristicBtn">Load Heuristic Defaults</button>
+          <span class="muted" id="saveInfo"></span>
+        </div>
+        <div class="shortcut-legend muted">
+          <span>Shortcuts</span>
+          <button type="button" class="shortcut-help-btn" aria-label="Show keyboard shortcuts help">?</button>
+          <div class="shortcut-tooltip" role="note" aria-label="Keyboard shortcuts">
+            <div class="tip-row"><code>J</code> / <code>K</code> next / previous record</div>
+            <div class="tip-row"><code>Shift+J</code> / <code>Shift+K</code> next / previous unlabeled</div>
+            <div class="tip-row"><code>Ctrl+S</code> or <code>Cmd+S</code> save current label</div>
+            <div class="tip-row"><code>Shift+S</code> mark skip and jump to next unlabeled</div>
+            <div class="tip-row muted">Navigation shortcuts are disabled while typing in form fields.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:12px;">
+        <h2>Heuristic Preview</h2>
+        <pre id="heuristicJson"></pre>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const state = {
+      rows: [],
+      selectedIndex: -1,
+      includeLabeled: true,
+      baselineFormStateJson: "",
+      isDirty: false,
+      suspendFormEvents: false,
+    };
+
+    const formFields = [
+      "policy_topic", "action", "penalty_type", "penalty_amount", "penalty_currency",
+      "penalty_percent", "fare_difference_required", "time_window", "before_after_departure",
+      "tax_refund_rule", "eligibility_conditions", "exceptions", "notes"
+    ];
+
+    const penaltyTypeOptions = [
+      "", "fixed_amount", "percentage", "forfeiture", "free", "fare_difference_only", "tax_only", "mixed", "unknown"
+    ];
+    const beforeAfterOptions = ["", "before_departure", "after_departure", "both", "not_applicable", "unknown"];
+
+    function el(id) { return document.getElementById(id); }
+
+    function setStatus(msg, type="") {
+      const box = el("statusBox");
+      box.textContent = msg;
+      box.className = "status" + (type ? " " + type : "");
+    }
+
+    function splitLines(text) {
+      return (text || "").split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+    }
+
+    function joinLines(values) {
+      return Array.isArray(values) ? values.join("\n") : "";
+    }
+
+    function parseTriBool(value) {
+      if (value === "true") return true;
+      if (value === "false") return false;
+      return null;
+    }
+
+    function optionHtml(value, label, selected) {
+      const isSelected = selected === value ? " selected" : "";
+      return `<option value="${escapeHtml(value)}"${isSelected}>${escapeHtml(label || value || "(empty)")}</option>`;
+    }
+
+    function selectHtml(options, selected, emptyLabel="(empty)") {
+      let html = optionHtml("", emptyLabel, selected || "");
+      options.filter(v => v !== "").forEach((value) => {
+        html += optionHtml(value, value, selected || "");
+      });
+      return html;
+    }
+
+    function createPenaltyTierRow(data = {}) {
+      const row = document.createElement("div");
+      row.className = "repeat-row";
+      row.innerHTML = `
+        <div class="repeat-row-grid">
+          <div class="field"><label>Time Window</label><input class="tier_time_window" type="text" placeholder="within 72 hours" value="${escapeHtml(data.time_window || "")}"></div>
+          <div class="field"><label>Before/After</label>
+            <select class="tier_before_after">${selectHtml(beforeAfterOptions, data.before_after_departure || "")}</select>
+          </div>
+          <div class="field"><label>Penalty Type</label>
+            <select class="tier_penalty_type">${selectHtml(penaltyTypeOptions, data.penalty_type || "")}</select>
+          </div>
+          <div class="field"><label>Penalty Amount</label><input class="tier_penalty_amount" type="number" step="0.01" value="${data.penalty_amount ?? ""}"></div>
+          <div class="field"><label>Currency</label><input class="tier_penalty_currency" type="text" placeholder="USD" value="${escapeHtml(data.penalty_currency || "")}"></div>
+          <div class="field"><label>Penalty Percent</label><input class="tier_penalty_percent" type="number" step="0.01" value="${data.penalty_percent ?? ""}"></div>
+          <div class="field"><label>Fare Diff Required</label>
+            <select class="tier_fare_diff">
+              ${optionHtml("", "(empty)", data.fare_difference_required === true ? "true" : data.fare_difference_required === false ? "false" : "")}
+              ${optionHtml("true", "true", data.fare_difference_required === true ? "true" : "")}
+              ${optionHtml("false", "false", data.fare_difference_required === false ? "false" : "")}
+            </select>
+          </div>
+          <div class="field"><label>Notes</label><input class="tier_notes" type="text" placeholder="segment/fare basis notes" value="${escapeHtml(data.notes || "")}"></div>
+        </div>
+        <div class="repeat-row-actions"><button class="remove-row-btn">Remove</button></div>
+      `;
+      row.querySelector(".remove-row-btn").addEventListener("click", () => {
+        row.remove();
+        onFormInputChange();
+      });
+      el("penaltyTierRows").appendChild(row);
+    }
+
+    function setPenaltyTiers(rows = []) {
+      const container = el("penaltyTierRows");
+      container.innerHTML = "";
+      if (!Array.isArray(rows) || rows.length === 0) {
+        createPenaltyTierRow({});
+        return;
+      }
+      rows.forEach((row) => createPenaltyTierRow(row || {}));
+    }
+
+    function collectPenaltyTiers() {
+      const rows = [];
+      el("penaltyTierRows").querySelectorAll(".repeat-row").forEach((row) => {
+        const item = {
+          time_window: row.querySelector(".tier_time_window").value.trim() || null,
+          before_after_departure: row.querySelector(".tier_before_after").value || null,
+          penalty_type: row.querySelector(".tier_penalty_type").value || null,
+          penalty_amount: row.querySelector(".tier_penalty_amount").value === "" ? null : Number(row.querySelector(".tier_penalty_amount").value),
+          penalty_currency: row.querySelector(".tier_penalty_currency").value.trim() || null,
+          penalty_percent: row.querySelector(".tier_penalty_percent").value === "" ? null : Number(row.querySelector(".tier_penalty_percent").value),
+          fare_difference_required: parseTriBool(row.querySelector(".tier_fare_diff").value),
+          notes: row.querySelector(".tier_notes").value.trim() || null,
+        };
+        const hasValue = Object.values(item).some((v) => v !== null);
+        if (hasValue) rows.push(item);
+      });
+      return rows;
+    }
+
+    function createRefundOptionRow(data = {}) {
+      const row = document.createElement("div");
+      row.className = "repeat-row";
+      row.innerHTML = `
+        <div class="repeat-row-grid">
+          <div class="field"><label>Method</label><input class="opt_method" type="text" placeholder="original_payment / travel_credit" value="${escapeHtml(data.method || "")}"></div>
+          <div class="field"><label>Allowed</label>
+            <select class="opt_allowed">
+              ${optionHtml("", "(empty)", data.allowed === true ? "true" : data.allowed === false ? "false" : "")}
+              ${optionHtml("true", "true", data.allowed === true ? "true" : "")}
+              ${optionHtml("false", "false", data.allowed === false ? "false" : "")}
+            </select>
+          </div>
+          <div class="field"><label>Fee Type</label>
+            <select class="opt_fee_type">${selectHtml(penaltyTypeOptions, data.fee_type || "")}</select>
+          </div>
+          <div class="field"><label>Fee Amount</label><input class="opt_fee_amount" type="number" step="0.01" value="${data.fee_amount ?? ""}"></div>
+          <div class="field"><label>Fee Currency</label><input class="opt_fee_currency" type="text" placeholder="USD" value="${escapeHtml(data.fee_currency || "")}"></div>
+          <div class="field"><label>Fee Percent</label><input class="opt_fee_percent" type="number" step="0.01" value="${data.fee_percent ?? ""}"></div>
+          <div class="field"><label>Time Window</label><input class="opt_time_window" type="text" placeholder="within 24 hours" value="${escapeHtml(data.time_window || "")}"></div>
+          <div class="field"><label>Before/After</label>
+            <select class="opt_before_after">${selectHtml(beforeAfterOptions, data.before_after_departure || "")}</select>
+          </div>
+          <div class="field" style="grid-column: 1 / -1;"><label>Notes</label><input class="opt_notes" type="text" placeholder="e.g., credit voucher issued to wallet" value="${escapeHtml(data.notes || "")}"></div>
+        </div>
+        <div class="repeat-row-actions"><button class="remove-row-btn">Remove</button></div>
+      `;
+      row.querySelector(".remove-row-btn").addEventListener("click", () => {
+        row.remove();
+        onFormInputChange();
+      });
+      el("refundOptionRows").appendChild(row);
+    }
+
+    function setRefundOptions(rows = []) {
+      const container = el("refundOptionRows");
+      container.innerHTML = "";
+      if (!Array.isArray(rows) || rows.length === 0) {
+        createRefundOptionRow({});
+        return;
+      }
+      rows.forEach((row) => createRefundOptionRow(row || {}));
+    }
+
+    function collectRefundOptions() {
+      const rows = [];
+      el("refundOptionRows").querySelectorAll(".repeat-row").forEach((row) => {
+        const item = {
+          method: row.querySelector(".opt_method").value.trim() || null,
+          allowed: parseTriBool(row.querySelector(".opt_allowed").value),
+          fee_type: row.querySelector(".opt_fee_type").value || null,
+          fee_amount: row.querySelector(".opt_fee_amount").value === "" ? null : Number(row.querySelector(".opt_fee_amount").value),
+          fee_currency: row.querySelector(".opt_fee_currency").value.trim() || null,
+          fee_percent: row.querySelector(".opt_fee_percent").value === "" ? null : Number(row.querySelector(".opt_fee_percent").value),
+          time_window: row.querySelector(".opt_time_window").value.trim() || null,
+          before_after_departure: row.querySelector(".opt_before_after").value || null,
+          notes: row.querySelector(".opt_notes").value.trim() || null,
+        };
+        const hasValue = Object.values(item).some((v) => v !== null);
+        if (hasValue) rows.push(item);
+      });
+      return rows;
+    }
+
+    function currentRow() {
+      if (state.selectedIndex < 0 || state.selectedIndex >= state.rows.length) return null;
+      return state.rows[state.selectedIndex];
+    }
+
+    function draftStorageKey(recordId) {
+      return `policy-label-draft:${recordId}`;
+    }
+
+    function safeLocalStorageGet(key) {
+      try { return window.localStorage.getItem(key); } catch (_) { return null; }
+    }
+
+    function safeLocalStorageSet(key, value) {
+      try { window.localStorage.setItem(key, value); } catch (_) {}
+    }
+
+    function safeLocalStorageRemove(key) {
+      try { window.localStorage.removeItem(key); } catch (_) {}
+    }
+
+    function renderQueue() {
+      const list = el("queueList");
+      list.innerHTML = "";
+      state.rows.forEach((row, idx) => {
+        const b = document.createElement("button");
+        b.className = "queue-item" + (idx === state.selectedIndex ? " active" : "");
+        b.onclick = () => { selectIndex(idx); };
+        const tags = [];
+        if (row.is_skipped) tags.push('<span class="badge">skipped</span>');
+        else if (row.is_labeled) tags.push('<span class="badge done">labeled</span>');
+        tags.push(`<span class="badge">${escapeHtml(row.document_type || "unknown")}</span>`);
+        if (row.carrier) tags.push(`<span class="badge">${escapeHtml(row.carrier)}</span>`);
+        if (row.supplier) tags.push(`<span class="badge">${escapeHtml(row.supplier)}</span>`);
+        b.innerHTML = `
+          <div style="font-size:12px; color:#5b6670;">${tags.join(" ")}</div>
+          <div style="margin-top:6px; font-weight:600; font-size:13px;">${escapeHtml(row.record_id)}</div>
+          <div style="margin-top:4px; font-size:12px; color:#333;">${escapeHtml((row.clause_text || "").slice(0, 140))}</div>
+        `;
+        list.appendChild(b);
+      });
+    }
+
+    function renderMeta() {
+      const total = state.rows.length;
+      const labeled = state.rows.filter(r => r.is_labeled).length;
+      const skipped = state.rows.filter(r => r.is_skipped).length;
+      const unlabeled = state.rows.filter(r => !r.is_labeled).length;
+      const pct = total ? Math.round((labeled / total) * 100) : 0;
+      el("queueMeta").textContent = `${labeled}/${total} processed in current view (${pct}%)`;
+      el("statLabeled").textContent = `Labeled: ${labeled}`;
+      el("statSkipped").textContent = `Skipped: ${skipped}`;
+      el("statUnlabeled").textContent = `Unlabeled: ${unlabeled}`;
+      el("queueProgressFill").style.width = `${pct}%`;
+    }
+
+    function fillFormFromRow(row, useManualPreferred=true) {
+      if (!row) return;
+      state.suspendFormEvents = true;
+      const manual = useManualPreferred ? (row.manual_label || null) : null;
+      const heuristic = row.heuristic || {};
+      const source = manual || heuristic || {};
+
+      setField("policy_topic", source.policy_topic || "");
+      setField("action", source.action || "");
+      setField("penalty_type", source.penalty_type || "");
+      setField("penalty_amount", source.penalty_amount ?? "");
+      setField("penalty_currency", source.penalty_currency || "");
+      setField("penalty_percent", source.penalty_percent ?? "");
+      setField("fare_difference_required", source.fare_difference_required === true ? "true" : source.fare_difference_required === false ? "false" : "");
+      setField("time_window", source.time_window || "");
+      setField("before_after_departure", source.before_after_departure || "");
+      setField("tax_refund_rule", source.tax_refund_rule || "");
+      setField("eligibility_conditions", joinLines(source.eligibility_conditions));
+      setField("exceptions", joinLines(source.exceptions));
+      setPenaltyTiers(source.penalty_tiers || []);
+      setRefundOptions(source.refund_payout_options || []);
+      setField("notes", (manual && manual.notes) || "");
+      state.suspendFormEvents = false;
+    }
+
+    function setField(id, value) {
+      const node = el(id);
+      if (!node) return;
+      node.value = value == null ? "" : String(value);
+    }
+
+    function getFormPayload(row) {
+      return {
+        record_id: row.record_id,
+        source_id: row.source_id || null,
+        document_id: row.document_id || null,
+        document_type: row.document_type || null,
+        carrier: row.carrier || null,
+        supplier: row.supplier || null,
+        offer_or_circular_id: row.offer_or_circular_id || null,
+        chunk_id: row.chunk_id || null,
+        clause_text: row.clause_text || null,
+        policy_topic: el("policy_topic").value || null,
+        action: el("action").value || null,
+        penalty_type: el("penalty_type").value || null,
+        penalty_amount: el("penalty_amount").value === "" ? null : Number(el("penalty_amount").value),
+        penalty_currency: el("penalty_currency").value || null,
+        penalty_percent: el("penalty_percent").value === "" ? null : Number(el("penalty_percent").value),
+        fare_difference_required: el("fare_difference_required").value === "" ? null : el("fare_difference_required").value === "true",
+        time_window: el("time_window").value || null,
+        before_after_departure: el("before_after_departure").value || null,
+        tax_refund_rule: el("tax_refund_rule").value || null,
+        eligibility_conditions: splitLines(el("eligibility_conditions").value),
+        exceptions: splitLines(el("exceptions").value),
+        penalty_tiers: collectPenaltyTiers(),
+        refund_payout_options: collectRefundOptions(),
+        notes: el("notes").value || null
+      };
+    }
+
+    function collectFormState() {
+      return {
+        policy_topic: el("policy_topic").value || "",
+        action: el("action").value || "",
+        penalty_type: el("penalty_type").value || "",
+        penalty_amount: el("penalty_amount").value || "",
+        penalty_currency: el("penalty_currency").value || "",
+        penalty_percent: el("penalty_percent").value || "",
+        fare_difference_required: el("fare_difference_required").value || "",
+        time_window: el("time_window").value || "",
+        before_after_departure: el("before_after_departure").value || "",
+        tax_refund_rule: el("tax_refund_rule").value || "",
+        eligibility_conditions: splitLines(el("eligibility_conditions").value),
+        exceptions: splitLines(el("exceptions").value),
+        penalty_tiers: collectPenaltyTiers(),
+        refund_payout_options: collectRefundOptions(),
+        notes: el("notes").value || "",
+      };
+    }
+
+    function formStateJson() {
+      return JSON.stringify(collectFormState());
+    }
+
+    function setBaselineFromCurrentForm() {
+      state.baselineFormStateJson = formStateJson();
+      updateDirtyState();
+    }
+
+    function updateDirtyState() {
+      state.isDirty = !!currentRow() && formStateJson() !== (state.baselineFormStateJson || "");
+      const base = (el("saveInfo").textContent || "").replace(/\s*Unsaved changes\.$/, "");
+      el("saveInfo").textContent = state.isDirty
+        ? `${base}${base ? " " : ""}Unsaved changes.`
+        : base;
+    }
+
+    function clearSaveInfoIfDirtyNoticeOnly() {
+      if (el("saveInfo").textContent === "Unsaved changes.") {
+        el("saveInfo").textContent = "";
+      }
+    }
+
+    function applyDraftToForm(row) {
+      if (!row) return false;
+      const raw = safeLocalStorageGet(draftStorageKey(row.record_id));
+      if (!raw) return false;
+      let draft;
+      try { draft = JSON.parse(raw); } catch (_) { return false; }
+      if (!draft || typeof draft !== "object") return false;
+      state.suspendFormEvents = true;
+      setField("policy_topic", draft.policy_topic || "");
+      setField("action", draft.action || "");
+      setField("penalty_type", draft.penalty_type || "");
+      setField("penalty_amount", draft.penalty_amount ?? "");
+      setField("penalty_currency", draft.penalty_currency || "");
+      setField("penalty_percent", draft.penalty_percent ?? "");
+      setField("fare_difference_required", draft.fare_difference_required || "");
+      setField("time_window", draft.time_window || "");
+      setField("before_after_departure", draft.before_after_departure || "");
+      setField("tax_refund_rule", draft.tax_refund_rule || "");
+      setField("eligibility_conditions", joinLines(draft.eligibility_conditions));
+      setField("exceptions", joinLines(draft.exceptions));
+      setPenaltyTiers(draft.penalty_tiers || []);
+      setRefundOptions(draft.refund_payout_options || []);
+      setField("notes", draft.notes || "");
+      state.suspendFormEvents = false;
+      return true;
+    }
+
+    function persistDraftForCurrentRow() {
+      const row = currentRow();
+      if (!row) return;
+      safeLocalStorageSet(draftStorageKey(row.record_id), formStateJson());
+    }
+
+    function maybeConfirmDiscardChanges(contextLabel="navigate") {
+      if (!state.isDirty) return true;
+      return window.confirm(`You have unsaved changes. Continue and discard unsaved changes to ${contextLabel}?`);
+    }
+
+    function renderRecord() {
+      const row = currentRow();
+      if (!row) {
+        el("recordHeader").textContent = "No record selected";
+        el("chunkText").textContent = "";
+        el("clauseText").textContent = "";
+        el("heuristicJson").textContent = "{}";
+        formFields.forEach(id => setField(id, ""));
+        setPenaltyTiers([]);
+        setRefundOptions([]);
+        state.baselineFormStateJson = "";
+        state.isDirty = false;
+        return;
+      }
+      el("recordHeader").innerHTML = `
+        <span class="badge ${row.is_labeled && !row.is_skipped ? "done" : ""}">${row.is_skipped ? "skipped" : (row.is_labeled ? "labeled" : "unlabeled")}</span>
+        <span class="badge">${escapeHtml(row.record_id)}</span>
+        <span class="badge">${escapeHtml(row.source_id || "unknown source")}</span>
+      `;
+      el("chunkText").textContent = row.chunk_text || "";
+      el("clauseText").textContent = row.clause_text || "";
+      el("heuristicJson").textContent = JSON.stringify(row.heuristic || {}, null, 2);
+      fillFormFromRow(row, true);
+      const draftLoaded = applyDraftToForm(row);
+      if (draftLoaded) {
+        el("saveInfo").textContent = "Loaded autosaved draft.";
+      } else {
+        el("saveInfo").textContent = row.manual_label ? "Loaded existing manual label." : "";
+      }
+      setBaselineFromCurrentForm();
+      if (draftLoaded) {
+        // Draft differs from saved/manual baseline logically, so mark dirty and warn on navigation.
+        // Baseline should stay based on saved/manual values, not the draft.
+        fillFormFromRow(row, true);
+        const manualOrHeuristicBaseline = formStateJson();
+        if (applyDraftToForm(row)) {
+          state.baselineFormStateJson = manualOrHeuristicBaseline;
+          updateDirtyState();
+          el("saveInfo").textContent = "Loaded autosaved draft. Unsaved changes.";
+        }
+      }
+    }
+
+    function renderAll() {
+      renderMeta();
+      renderQueue();
+      renderRecord();
+    }
+
+    function escapeHtml(s) {
+      return String(s ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    async function loadQueue() {
+      return loadQueueInternal(false);
+    }
+
+    async function loadQueueInternal(skipConfirm=false) {
+      if (!skipConfirm && !maybeConfirmDiscardChanges("reload queue")) return;
+      setStatus("Loading labeling queue...");
+      const url = `/labeling/api/queue?include_labeled=${state.includeLabeled ? "true" : "false"}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      if (!res.ok) {
+        setStatus(`Failed to load queue: ${data.detail || res.statusText}`, "error");
+        return;
+      }
+      state.rows = data.rows || [];
+      if (state.rows.length === 0) {
+        state.selectedIndex = -1;
+        renderAll();
+        setStatus("Queue is empty. Generate a real-pilot labeling queue first.", "error");
+        return;
+      }
+      if (state.selectedIndex < 0 || state.selectedIndex >= state.rows.length) {
+        state.selectedIndex = 0;
+      }
+      renderAll();
+      setStatus(`Loaded ${data.returned_records} queue records from ${data.queue_path}`, "ok");
+    }
+
+    async function saveCurrent() {
+      const row = currentRow();
+      if (!row) return false;
+      const payload = getFormPayload(row);
+      payload.label_status = "labeled";
+      return savePayload(row, payload);
+    }
+
+    async function savePayload(row, payload) {
+      setStatus(`Saving ${row.record_id}...`);
+      const res = await fetch("/labeling/api/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setStatus(`Save failed: ${data.detail || res.statusText}`, "error");
+        return false;
+      }
+      row.is_labeled = true;
+      row.is_skipped = String(data.record.label_status || "").toLowerCase() === "skip";
+      row.manual_label = data.record;
+      safeLocalStorageRemove(draftStorageKey(row.record_id));
+      renderAll();
+      setStatus(`Saved ${row.record_id} to manual gold`, "ok");
+      el("saveInfo").textContent = data.updated ? "Updated existing manual label." : "Created manual label.";
+      return true;
+    }
+
+    async function saveAndNextUnlabeled() {
+      const ok = await saveCurrent();
+      if (ok) nextUnlabeled();
+    }
+
+    async function markSkipCurrent() {
+      const row = currentRow();
+      if (!row) return false;
+      const payload = {
+        record_id: row.record_id,
+        source_id: row.source_id || null,
+        document_id: row.document_id || null,
+        document_type: row.document_type || null,
+        carrier: row.carrier || null,
+        supplier: row.supplier || null,
+        offer_or_circular_id: row.offer_or_circular_id || null,
+        chunk_id: row.chunk_id || null,
+        clause_text: row.clause_text || null,
+        label_status: "skip",
+        notes: el("notes").value || "Skipped as ambiguous clause",
+      };
+      const ok = await savePayload(row, payload);
+      if (ok) {
+        el("saveInfo").textContent = "Marked as skip.";
+      }
+      return ok;
+    }
+
+    async function skipAndNextUnlabeled() {
+      const ok = await markSkipCurrent();
+      if (ok) nextUnlabeled();
+    }
+
+    function next(delta) {
+      if (!state.rows.length) return;
+      if (!maybeConfirmDiscardChanges("move to another record")) return;
+      state.selectedIndex = Math.max(0, Math.min(state.rows.length - 1, state.selectedIndex + delta));
+      renderAll();
+    }
+
+    function selectIndex(idx) {
+      if (idx === state.selectedIndex) return;
+      if (!maybeConfirmDiscardChanges("move to another record")) return;
+      state.selectedIndex = Math.max(0, Math.min(state.rows.length - 1, idx));
+      renderAll();
+    }
+
+    function nextUnlabeled() {
+      if (!state.rows.length) return;
+      if (!maybeConfirmDiscardChanges("move to another record")) return;
+      for (let i = state.selectedIndex + 1; i < state.rows.length; i++) {
+        if (!state.rows[i].is_labeled) { state.selectedIndex = i; renderAll(); return; }
+      }
+      for (let i = 0; i <= state.selectedIndex; i++) {
+        if (!state.rows[i].is_labeled) { state.selectedIndex = i; renderAll(); return; }
+      }
+      setStatus("All records in current view are labeled.", "ok");
+    }
+
+    function previousUnlabeled() {
+      if (!state.rows.length) return;
+      if (!maybeConfirmDiscardChanges("move to another record")) return;
+      for (let i = state.selectedIndex - 1; i >= 0; i--) {
+        if (!state.rows[i].is_labeled) { state.selectedIndex = i; renderAll(); return; }
+      }
+      for (let i = state.rows.length - 1; i >= state.selectedIndex; i--) {
+        if (!state.rows[i].is_labeled) { state.selectedIndex = i; renderAll(); return; }
+      }
+      setStatus("All records in current view are labeled.", "ok");
+    }
+
+    function loadHeuristicIntoForm() {
+      const row = currentRow();
+      if (!row) return;
+      fillFormFromRow(row, false);
+      el("saveInfo").textContent = "Loaded heuristic values into form.";
+    }
+
+    function addCommonPenaltyTierTemplate() {
+      createPenaltyTierRow({
+        time_window: "72 hours before departure",
+        before_after_departure: "before_departure",
+        penalty_type: "fixed_amount",
+      });
+      createPenaltyTierRow({
+        time_window: "within 72 hours of departure",
+        before_after_departure: "before_departure",
+        penalty_type: "fixed_amount",
+      });
+      createPenaltyTierRow({
+        time_window: "no-show / after departure",
+        before_after_departure: "after_departure",
+        penalty_type: "fixed_amount",
+      });
+      onFormInputChange();
+    }
+
+    function addCashCreditTemplate() {
+      createRefundOptionRow({
+        method: "original_payment",
+        allowed: true,
+        fee_type: "fixed_amount",
+      });
+      createRefundOptionRow({
+        method: "travel_credit",
+        allowed: true,
+        fee_type: "free",
+        notes: "Credit voucher to account wallet",
+      });
+      onFormInputChange();
+    }
+
+    function isTypingTarget(target) {
+      if (!target) return false;
+      const tag = (target.tagName || "").toUpperCase();
+      return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || !!target.isContentEditable;
+    }
+
+    document.addEventListener("keydown", async (e) => {
+      const key = (e.key || "").toLowerCase();
+      const typing = isTypingTarget(e.target);
+
+      if ((e.ctrlKey || e.metaKey) && key === "s") {
+        e.preventDefault();
+        await saveCurrent();
+        return;
+      }
+
+      if (e.altKey || e.ctrlKey || e.metaKey) return;
+      if (typing) return;
+
+      if (e.shiftKey && key === "j") {
+        e.preventDefault();
+        nextUnlabeled();
+      } else if (e.shiftKey && key === "k") {
+        e.preventDefault();
+        previousUnlabeled();
+      } else if (e.shiftKey && key === "s") {
+        e.preventDefault();
+        await skipAndNextUnlabeled();
+      } else if (key === "j") {
+        e.preventDefault();
+        next(1);
+      } else if (key === "k") {
+        e.preventDefault();
+        next(-1);
+      }
+    });
+
+    function onFormInputChange() {
+      if (state.suspendFormEvents) return;
+      clearSaveInfoIfDirtyNoticeOnly();
+      updateDirtyState();
+      persistDraftForCurrentRow();
+    }
+
+    el("reloadBtn").addEventListener("click", loadQueue);
+    el("saveBtn").addEventListener("click", saveCurrent);
+    el("saveNextBtn").addEventListener("click", saveAndNextUnlabeled);
+    el("skipBtn").addEventListener("click", markSkipCurrent);
+    el("skipNextBtn").addEventListener("click", skipAndNextUnlabeled);
+    el("prevBtn").addEventListener("click", () => next(-1));
+    el("nextBtn").addEventListener("click", () => next(1));
+    el("nextUnlabeledBtn").addEventListener("click", nextUnlabeled);
+    el("loadHeuristicBtn").addEventListener("click", loadHeuristicIntoForm);
+    el("addPenaltyTierBtn").addEventListener("click", () => { createPenaltyTierRow({}); onFormInputChange(); });
+    el("addCommonTierTemplateBtn").addEventListener("click", addCommonPenaltyTierTemplate);
+    el("addRefundOptionBtn").addEventListener("click", () => { createRefundOptionRow({}); onFormInputChange(); });
+    el("addCashCreditTemplateBtn").addEventListener("click", addCashCreditTemplate);
+    el("showLabeledChk").addEventListener("change", (e) => {
+      if (!maybeConfirmDiscardChanges("change queue filter")) {
+        e.target.checked = state.includeLabeled;
+        return;
+      }
+      state.includeLabeled = !!e.target.checked;
+      state.selectedIndex = 0;
+      loadQueueInternal(true);
+    });
+
+    formFields.forEach((id) => {
+      const node = el(id);
+      if (!node) return;
+      node.addEventListener("input", onFormInputChange);
+      node.addEventListener("change", onFormInputChange);
+    });
+    ["penaltyTierRows", "refundOptionRows"].forEach((containerId) => {
+      const node = el(containerId);
+      if (!node) return;
+      node.addEventListener("input", onFormInputChange);
+      node.addEventListener("change", onFormInputChange);
+    });
+
+    window.addEventListener("beforeunload", (e) => {
+      if (!state.isDirty) return;
+      e.preventDefault();
+      e.returnValue = "";
+    });
+
+    setPenaltyTiers([]);
+    setRefundOptions([]);
+    loadQueue().catch(err => setStatus(`Unexpected error: ${err}`, "error"));
+  </script>
+</body>
+</html>

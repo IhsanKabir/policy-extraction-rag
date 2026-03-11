@@ -1,0 +1,12 @@
+fastapi
+uvicorn[standard]
+pydantic
+qdrant-client
+opensearch-py
+pymupdf
+beautifulsoup4
+numpy
+scikit-learn
+python-dotenv
+psycopg[binary]
+pytest

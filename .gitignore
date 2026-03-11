@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Node / Next.js
+node_modules/
+.next/
+dist/
+
+# Environment / secrets
+.env
+.env.local
+.labeling_postgres_dsn.txt
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Data and local artifacts
+data/raw/
+data/raw_original/
+data/normalized/
+data/indexes/
+data/tmp/
+data/runtime/
+data/*.json
+data/*.jsonl
+data/*.db
+data/*.dump
+data/*.log
+data/*.err.log
+data/*quick_url.txt
+!data/*.csv
+!data/*.md
+
+# Local datasets / exports
+*.dump
+training_seed.dump
+
+# Logs
+*.log
+logs/
