@@ -3,396 +3,411 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Policy Labeling UI</title>
+  <title>Policy Labeling Studio</title>
   <style>
+    /* Enhanced labeling UI. Presentation + ergonomics only — the API contract
+       (field IDs, /labeling/api/queue + /save payloads) is unchanged from the
+       original. Dark editorial theme; faster scanning + divergence highlighting. */
     :root {
-      --bg: #f4f0e8;
-      --panel: #fffdf7;
-      --ink: #1b1f22;
-      --muted: #5b6670;
-      --line: #d6d1c6;
-      --accent: #004e64;
-      --accent-2: #00a896;
-      --warn: #b02a37;
-      --ok: #2d6a4f;
-      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      --sans: "Segoe UI", system-ui, sans-serif;
+      --bg: oklch(17% 0.015 250);
+      --bg-2: oklch(21% 0.018 250);
+      --panel: oklch(24% 0.018 250);
+      --panel-2: oklch(27% 0.02 250);
+      --ink: oklch(95% 0.01 250);
+      --muted: oklch(70% 0.018 250);
+      --faint: oklch(58% 0.02 250);
+      --line: oklch(34% 0.02 250);
+      --line-2: oklch(42% 0.03 250);
+      --accent: oklch(74% 0.15 215);
+      --accent-2: oklch(72% 0.16 165);
+      --warn: oklch(72% 0.17 60);
+      --bad: oklch(68% 0.2 25);
+      --ok: oklch(73% 0.16 155);
+      --diverge: oklch(74% 0.17 60);
+      --hl-money: oklch(78% 0.16 145);
+      --hl-time: oklch(76% 0.15 230);
+      --hl-neg: oklch(72% 0.18 25);
+      --mono: ui-monospace, "Cascadia Code", SFMono-Regular, Consolas, monospace;
+      --sans: "Inter", "Segoe UI", system-ui, sans-serif;
+      --radius: 12px;
     }
     * { box-sizing: border-box; }
+    html, body { height: 100%; }
     body {
       margin: 0;
       font-family: var(--sans);
       color: var(--ink);
-      background: radial-gradient(circle at 0% 0%, #fff8e8 0%, var(--bg) 55%, #ece7dc 100%);
+      background:
+        radial-gradient(120% 90% at 100% -10%, oklch(26% 0.04 215 / 0.35), transparent 55%),
+        var(--bg);
+      font-size: 14px;
+      -webkit-font-smoothing: antialiased;
     }
-    .app {
-      display: grid;
-      grid-template-columns: 340px minmax(0, 1fr);
-      min-height: 100vh;
-    }
+    .app { display: grid; grid-template-columns: 320px minmax(0, 1fr); min-height: 100vh; }
+
+    /* ---- Sidebar ---- */
     .sidebar {
       border-right: 1px solid var(--line);
-      background: linear-gradient(180deg, #faf6ed, #f2ede3);
-      padding: 12px;
-      overflow: auto;
-    }
-    .main {
+      background: linear-gradient(180deg, var(--bg-2), var(--bg));
       padding: 14px;
       overflow: auto;
+      display: flex; flex-direction: column; gap: 12px;
     }
+    .brand { display: flex; align-items: baseline; gap: 8px; }
+    .brand h1 { margin: 0; font-size: 17px; letter-spacing: -0.02em; }
+    .brand .dot { color: var(--accent); }
+    .kicker { color: var(--accent-2); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; }
+
     .card {
       background: var(--panel);
       border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 12px;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.03);
+      border-radius: var(--radius);
+      padding: 14px;
     }
-    .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-    .row + .row { margin-top: 8px; }
-    .grow { flex: 1; }
-    h1 { margin: 0 0 6px; font-size: 20px; }
-    h2 { margin: 0 0 8px; font-size: 14px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+    .card.tight { padding: 11px 12px; }
     .muted { color: var(--muted); font-size: 12px; }
-    .mini-stats { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
-    .mini-stat {
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: rgba(255,255,255,0.7);
-      padding: 6px 8px;
-      font-size: 12px;
-    }
+    .faint { color: var(--faint); font-size: 11.5px; }
+
     .progress {
-      width: 100%;
-      height: 10px;
-      border-radius: 999px;
-      border: 1px solid var(--line);
-      background: #f1ede4;
-      overflow: hidden;
-      margin-top: 8px;
+      width: 100%; height: 8px; border-radius: 999px;
+      border: 1px solid var(--line); background: var(--bg); overflow: hidden; margin: 10px 0 8px;
     }
-    .progress-fill {
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, var(--accent), var(--accent-2));
-      transition: width 120ms ease-out;
+    .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), var(--accent-2)); transition: width 160ms ease-out; }
+    .mini-stats { display: flex; gap: 6px; }
+    .mini-stat {
+      flex: 1; text-align: center; border: 1px solid var(--line); border-radius: 9px;
+      background: var(--bg); padding: 7px 4px;
     }
-    button, select, input, textarea {
-      font: inherit;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      padding: 8px 10px;
-      background: #fff;
-      color: inherit;
-    }
-    button {
-      cursor: pointer;
-      background: linear-gradient(180deg, #fff, #f4f4f4);
-    }
-    button.primary {
-      background: linear-gradient(180deg, #0d6c89, var(--accent));
-      border-color: #0a5a72;
-      color: white;
-    }
-    button.good {
-      background: linear-gradient(180deg, #3f8f6a, var(--ok));
-      color: #fff;
-      border-color: #2a5c43;
-    }
-    button.ghost {
-      background: transparent;
-    }
-    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .mini-stat .n { font-size: 18px; font-weight: 700; letter-spacing: -0.02em; }
+    .mini-stat .l { font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--faint); }
+    .mini-stat.lab .n { color: var(--ok); }
+    .mini-stat.skip .n { color: var(--warn); }
+    .mini-stat.un .n { color: var(--accent); }
+
+    /* ---- Carrier progress ---- */
+    .carrier-bars { display: grid; gap: 5px; margin-top: 4px; }
+    .carrier-bar { display: grid; grid-template-columns: 34px 1fr 38px; gap: 7px; align-items: center; font-size: 11px; }
+    .carrier-bar .cb-track { height: 6px; border-radius: 999px; background: var(--bg); border: 1px solid var(--line); overflow: hidden; }
+    .carrier-bar .cb-fill { height: 100%; background: var(--accent-2); }
+    .carrier-bar .cb-code { font-family: var(--mono); color: var(--muted); font-weight: 600; }
+    .carrier-bar .cb-num { text-align: right; color: var(--faint); font-variant-numeric: tabular-nums; }
+
+    /* ---- Queue list ---- */
+    #queueList { display: flex; flex-direction: column; gap: 7px; }
     .queue-item {
-      width: 100%;
-      text-align: left;
-      background: #fff;
-      margin-bottom: 8px;
-      border-radius: 10px;
-      padding: 10px;
-      border: 1px solid var(--line);
+      width: 100%; text-align: left; cursor: pointer;
+      background: var(--bg-2); color: var(--ink);
+      border: 1px solid var(--line); border-left: 3px solid transparent;
+      border-radius: 10px; padding: 9px 10px; transition: border-color 120ms, background 120ms;
     }
-    .queue-item.active { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(0, 78, 100, 0.15); }
-    .badge {
-      display: inline-block;
-      font-size: 11px;
-      border-radius: 999px;
-      padding: 2px 8px;
-      border: 1px solid var(--line);
-      background: #f8f8f8;
-      margin-right: 4px;
+    .queue-item:hover { background: var(--panel-2); }
+    .queue-item.active { border-color: var(--accent); border-left-color: var(--accent); background: var(--panel-2); }
+    .queue-item.is-labeled { border-left-color: var(--ok); }
+    .queue-item.is-skipped { border-left-color: var(--warn); opacity: 0.72; }
+    .qi-top { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
+    .qi-text { margin-top: 6px; font-size: 12px; color: var(--muted); line-height: 1.35;
+               display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .qi-idx { font-family: var(--mono); font-size: 10.5px; color: var(--faint); margin-left: auto; }
+
+    /* ---- Main ---- */
+    .main { overflow: auto; padding: 0; display: flex; flex-direction: column; }
+    .topbar {
+      position: sticky; top: 0; z-index: 10;
+      display: flex; align-items: center; gap: 10px;
+      padding: 11px 16px; border-bottom: 1px solid var(--line);
+      background: oklch(19% 0.015 250 / 0.9); backdrop-filter: blur(8px);
     }
-    .badge.done { background: #e8f4ee; border-color: #b5d8c6; color: #1f5b3f; }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
+    .rec-id-chip { font-family: var(--mono); font-size: 12px; }
+    .main-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; max-width: 1180px; width: 100%; margin: 0 auto; }
+
+    h2 { margin: 0 0 10px; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; }
+    .h2row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .h2row h2 { margin: 0; }
+
+    /* ---- Buttons ---- */
+    button, select, input, textarea {
+      font: inherit; color: var(--ink);
+      border: 1px solid var(--line); border-radius: 9px; padding: 8px 10px;
+      background: var(--bg);
     }
-    .field label {
-      display: block;
-      font-size: 12px;
-      color: var(--muted);
-      margin-bottom: 4px;
+    select option { background: var(--panel); }
+    button { cursor: pointer; background: var(--panel-2); border-color: var(--line-2); transition: background 120ms, border-color 120ms, transform 70ms; }
+    button:hover { background: oklch(32% 0.025 250); border-color: var(--accent); }
+    button:active { transform: translateY(1px); }
+    button.primary { background: var(--accent); color: oklch(18% 0.04 215); border-color: transparent; font-weight: 650; }
+    button.primary:hover { background: oklch(80% 0.15 215); }
+    button.good { background: var(--accent-2); color: oklch(17% 0.04 165); border-color: transparent; font-weight: 650; }
+    button.good:hover { background: oklch(79% 0.16 165); }
+    button.ghost { background: transparent; }
+    button.sm { padding: 5px 9px; font-size: 12px; border-radius: 8px; }
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-row { display: flex; gap: 7px; align-items: center; flex-wrap: wrap; }
+
+    /* ---- Source text panels ---- */
+    .split { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .src-panel .src-head { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
+    .src-panel .src-head .lbl { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--faint); font-weight: 700; }
+    pre.src {
+      margin: 0; white-space: pre-wrap; word-break: break-word;
+      background: var(--bg); border: 1px solid var(--line); border-radius: 10px;
+      padding: 12px; font-family: var(--mono); font-size: 12.5px; line-height: 1.55;
+      max-height: 300px; overflow: auto; color: oklch(88% 0.01 250);
     }
+    pre.src.clause { border-color: var(--line-2); background: oklch(22% 0.02 250); }
+    /* inline highlights for policy signals */
+    mark { border-radius: 4px; padding: 0 2px; font-weight: 600; color: oklch(15% 0.02 250); }
+    mark.m-money { background: var(--hl-money); }
+    mark.m-time  { background: var(--hl-time); }
+    mark.m-neg   { background: var(--hl-neg); color: oklch(98% 0 0); }
+    mark.m-verb  { background: oklch(80% 0.12 300); }
+    .legend { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 7px; }
+    .legend span { font-size: 10.5px; color: var(--faint); display: inline-flex; align-items: center; gap: 4px; }
+    .legend i { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+
+    /* ---- Form ---- */
+    .field-group { margin-bottom: 14px; }
+    .field-group:last-child { margin-bottom: 0; }
+    .group-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent-2); font-weight: 700; margin-bottom: 9px; padding-bottom: 5px; border-bottom: 1px solid var(--line); }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 11px; }
+    .grid.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .field label { display: block; font-size: 11.5px; color: var(--muted); margin-bottom: 4px; font-weight: 500; }
     .field input, .field select, .field textarea { width: 100%; }
-    .field textarea { min-height: 72px; resize: vertical; }
-    .repeat-list {
-      display: grid;
-      gap: 8px;
+    .field textarea { min-height: 64px; resize: vertical; font-size: 13px; }
+    .field.wide { grid-column: 1 / -1; }
+    /* divergence: field value differs from heuristic */
+    .field.diverged > label::after {
+      content: "≠ heuristic"; margin-left: 7px; font-size: 9.5px; font-weight: 700;
+      color: var(--diverge); border: 1px solid var(--diverge); border-radius: 999px; padding: 0 5px;
+      vertical-align: middle; opacity: 0.9;
     }
-    .repeat-row {
-      border: 1px dashed var(--line);
-      border-radius: 8px;
-      padding: 8px;
-      background: #fffdfa;
+    .field.diverged input, .field.diverged select, .field.diverged textarea {
+      border-color: var(--diverge); box-shadow: inset 0 0 0 1px oklch(72% 0.17 60 / 0.25);
     }
-    .repeat-row-grid {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 8px;
+
+    .repeat-list { display: grid; gap: 9px; }
+    .repeat-row { border: 1px dashed var(--line-2); border-radius: 10px; padding: 10px; background: var(--bg); }
+    .repeat-row-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; }
+    .repeat-row .field label { font-size: 10.5px; }
+    .repeat-row-actions { display: flex; justify-content: flex-end; margin-top: 8px; }
+
+    .badge {
+      display: inline-block; font-size: 10.5px; border-radius: 999px; padding: 2px 9px;
+      border: 1px solid var(--line-2); background: var(--bg); color: var(--muted); font-weight: 600;
     }
-    .repeat-row-actions {
-      display: flex;
-      justify-content: flex-end;
-      margin-top: 8px;
+    .badge.done { background: oklch(30% 0.08 155 / 0.5); border-color: var(--ok); color: var(--ok); }
+    .badge.skip { background: oklch(32% 0.08 60 / 0.4); border-color: var(--warn); color: var(--warn); }
+    .badge.un { border-color: var(--accent); color: var(--accent); }
+    .badge.carrier { font-family: var(--mono); }
+
+    /* ---- sticky action bar ---- */
+    .actionbar {
+      position: sticky; bottom: 0; z-index: 9;
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      padding: 11px 14px; border: 1px solid var(--line); border-radius: var(--radius);
+      background: oklch(22% 0.018 250 / 0.96); backdrop-filter: blur(8px);
+      box-shadow: 0 -6px 24px oklch(0% 0 0 / 0.25);
     }
-    .repeat-row .field label {
-      font-size: 11px;
-    }
-    .wide { grid-column: 1 / -1; }
-    pre {
-      margin: 0;
-      white-space: pre-wrap;
-      word-break: break-word;
-      background: #fbfbfb;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      padding: 10px;
-      font-family: var(--mono);
-      font-size: 12px;
-    }
-    .split {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
+
     .status {
-      font-size: 12px;
-      padding: 8px 10px;
-      border-radius: 8px;
-      border: 1px solid var(--line);
-      background: #fff;
+      font-size: 12.5px; padding: 8px 12px; border-radius: 9px;
+      border: 1px solid var(--line); background: var(--panel); color: var(--muted);
     }
-    .status.error { border-color: #efc2c7; background: #fff2f4; color: var(--warn); }
-    .status.ok { border-color: #bfe2ce; background: #eef9f3; color: var(--ok); }
-    .shortcut-legend {
-      margin-top: 8px;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      position: relative;
-    }
-    .shortcut-help-btn {
-      width: 20px;
-      height: 20px;
-      border-radius: 999px;
-      padding: 0;
-      line-height: 18px;
-      text-align: center;
-      font-weight: 700;
-      color: var(--accent);
-      background: #fff;
-      border: 1px solid var(--line);
-    }
-    .shortcut-tooltip {
-      position: absolute;
-      left: 0;
-      top: calc(100% + 6px);
-      width: min(320px, calc(100vw - 40px));
-      padding: 8px 10px;
-      border-radius: 10px;
-      border: 1px solid var(--line);
-      background: #fffef9;
-      box-shadow: 0 10px 24px rgba(0,0,0,0.08);
-      font-size: 12px;
-      color: var(--ink);
-      display: none;
-      z-index: 20;
-    }
-    .shortcut-tooltip code {
-      font-family: var(--mono);
-      background: #f6f3ea;
-      border: 1px solid var(--line);
-      border-radius: 6px;
-      padding: 1px 4px;
-    }
-    .shortcut-tooltip .tip-row + .tip-row { margin-top: 4px; }
-    .shortcut-legend:hover .shortcut-tooltip,
-    .shortcut-legend:focus-within .shortcut-tooltip {
-      display: block;
-    }
-    @media (max-width: 1000px) {
+    .status.error { border-color: var(--bad); background: oklch(30% 0.1 25 / 0.3); color: oklch(82% 0.12 25); }
+    .status.ok { border-color: var(--ok); background: oklch(30% 0.08 155 / 0.3); color: var(--ok); }
+
+    details.heur { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+    details.heur summary { cursor: pointer; padding: 11px 14px; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; }
+    details.heur pre { margin: 0 14px 14px; white-space: pre-wrap; word-break: break-word; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 11px; font-family: var(--mono); font-size: 11.5px; color: var(--muted); max-height: 240px; overflow: auto; }
+
+    kbd { font-family: var(--mono); font-size: 10.5px; background: var(--bg); border: 1px solid var(--line-2); border-bottom-width: 2px; border-radius: 5px; padding: 1px 5px; color: var(--ink); }
+    .shortcut-tooltip { position: absolute; right: 0; top: calc(100% + 8px); width: min(340px, calc(100vw - 40px)); padding: 11px 13px; border-radius: 11px; border: 1px solid var(--line-2); background: var(--panel); box-shadow: 0 14px 34px oklch(0% 0 0 / 0.4); font-size: 12px; display: none; z-index: 30; }
+    .shortcut-legend { position: relative; }
+    .shortcut-legend:hover .shortcut-tooltip, .shortcut-legend:focus-within .shortcut-tooltip { display: block; }
+    .tip-row { display: flex; justify-content: space-between; gap: 12px; }
+    .tip-row + .tip-row { margin-top: 6px; }
+
+    @media (max-width: 1040px) {
       .app { grid-template-columns: 1fr; }
-      .sidebar { border-right: 0; border-bottom: 1px solid var(--line); max-height: 42vh; }
-      .grid, .split { grid-template-columns: 1fr; }
-      .repeat-row-grid { grid-template-columns: 1fr; }
+      .sidebar { border-right: 0; border-bottom: 1px solid var(--line); max-height: 44vh; }
+      .split, .grid, .grid.cols-3, .repeat-row-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
   <div class="app">
     <aside class="sidebar">
-      <div class="card">
-        <h1>Manual Labeling</h1>
-        <div class="muted" id="queueMeta">Loading queue...</div>
-        <div class="progress" aria-label="Labeling progress">
-          <div class="progress-fill" id="queueProgressFill"></div>
-        </div>
+      <div class="card tight">
+        <div class="brand"><span class="kicker">Policy RAG</span></div>
+        <div class="brand" style="margin-top:2px;"><h1>Labeling<span class="dot">.</span>Studio</h1></div>
+        <div class="muted" id="queueMeta" style="margin-top:6px;">Loading queue…</div>
+        <div class="progress" aria-label="Labeling progress"><div class="progress-fill" id="queueProgressFill"></div></div>
         <div class="mini-stats">
-          <div class="mini-stat" id="statLabeled">Labeled: 0</div>
-          <div class="mini-stat" id="statSkipped">Skipped: 0</div>
-          <div class="mini-stat" id="statUnlabeled">Unlabeled: 0</div>
-        </div>
-        <div class="row" style="margin-top:10px;">
-          <button class="ghost" id="reloadBtn">Reload</button>
-          <label class="row muted" style="margin-left:auto;">
-            <input type="checkbox" id="showLabeledChk" checked>
-            Show labeled
-          </label>
-        </div>
-        <div class="row" style="margin-top:8px;">
-          <button id="prevBtn">Prev</button>
-          <button id="nextBtn">Next</button>
-          <button class="good" id="nextUnlabeledBtn">Next Unlabeled</button>
+          <div class="mini-stat lab"><div class="n" id="statLabeledN">0</div><div class="l">Labeled</div></div>
+          <div class="mini-stat skip"><div class="n" id="statSkippedN">0</div><div class="l">Skipped</div></div>
+          <div class="mini-stat un"><div class="n" id="statUnlabeledN">0</div><div class="l">To do</div></div>
         </div>
       </div>
-      <div id="queueList" style="margin-top:12px;"></div>
+
+      <div class="card tight">
+        <div class="kicker" style="margin-bottom:8px;">By carrier</div>
+        <div class="carrier-bars" id="carrierBars"></div>
+      </div>
+
+      <div class="card tight">
+        <div class="btn-row">
+          <button class="ghost sm" id="reloadBtn">↻ Reload</button>
+          <label class="muted" style="margin-left:auto; display:inline-flex; gap:5px; align-items:center; cursor:pointer;">
+            <input type="checkbox" id="showLabeledChk" checked style="width:auto;"> show labeled
+          </label>
+        </div>
+        <div class="btn-row" style="margin-top:8px;">
+          <button class="sm" id="prevBtn">↑ Prev</button>
+          <button class="sm" id="nextBtn">↓ Next</button>
+          <button class="good sm" id="nextUnlabeledBtn" style="margin-left:auto;">Next to-do →</button>
+        </div>
+      </div>
+
+      <div id="queueList"></div>
     </aside>
 
     <main class="main">
-      <div class="card">
-        <div id="statusBox" class="status">Ready.</div>
+      <div class="topbar">
+        <span class="badge" id="recStatusBadge">—</span>
+        <span class="rec-id-chip muted" id="recIdChip">No record</span>
+        <span style="margin-left:auto;" class="shortcut-legend muted">
+          <kbd>?</kbd> shortcuts
+          <div class="shortcut-tooltip" role="note">
+            <div class="tip-row"><span>Next / Prev record</span><span><kbd>J</kbd> <kbd>K</kbd></span></div>
+            <div class="tip-row"><span>Next / Prev to-do</span><span><kbd>⇧J</kbd> <kbd>⇧K</kbd></span></div>
+            <div class="tip-row"><span>Save label</span><span><kbd>Ctrl/⌘ S</kbd></span></div>
+            <div class="tip-row"><span>Save + next to-do</span><span><kbd>⇧↵</kbd></span></div>
+            <div class="tip-row"><span>Skip + next to-do</span><span><kbd>⇧S</kbd></span></div>
+            <div class="tip-row faint">Disabled while typing in a field.</div>
+          </div>
+        </span>
       </div>
 
-      <div class="card" style="margin-top:12px;">
-        <h2>Record</h2>
-        <div id="recordHeader" class="muted">No record selected</div>
-        <div class="split" style="margin-top:10px;">
-          <div>
-            <div class="muted" style="margin-bottom:4px;">Chunk Text</div>
-            <pre id="chunkText"></pre>
+      <div class="main-body">
+        <div class="status" id="statusBox">Ready.</div>
+
+        <div class="card">
+          <div class="h2row"><h2>Source</h2><span class="faint" id="recordHeaderMeta"></span></div>
+          <div class="split">
+            <div class="src-panel">
+              <div class="src-head"><span class="lbl">Clause</span><span class="faint">— the unit you're labeling</span></div>
+              <pre class="src clause" id="clauseText"></pre>
+            </div>
+            <div class="src-panel">
+              <div class="src-head"><span class="lbl">Full chunk</span><span class="faint">— surrounding context</span></div>
+              <pre class="src" id="chunkText"></pre>
+            </div>
           </div>
-          <div>
-            <div class="muted" style="margin-bottom:4px;">Clause Text</div>
-            <pre id="clauseText"></pre>
+          <div class="legend">
+            <span><i style="background:var(--hl-money)"></i> amount / %</span>
+            <span><i style="background:var(--hl-time)"></i> time / deadline</span>
+            <span><i style="background:var(--hl-neg)"></i> not allowed / non-refundable</span>
+            <span><i style="background:oklch(80% 0.12 300)"></i> refund / change / cancel verb</span>
           </div>
         </div>
-      </div>
 
-      <div class="card" style="margin-top:12px;">
-        <h2>Manual Label</h2>
-        <div class="grid">
-          <div class="field"><label>Policy Topic</label>
-            <select id="policy_topic">
-              <option value="">(empty)</option>
-              <option>refund</option>
-              <option>reissue_change</option>
-              <option>no_show</option>
-              <option>go_show</option>
-              <option>cancellation</option>
-              <option>waiver</option>
-              <option>other</option>
-            </select>
+        <div class="card">
+          <div class="h2row"><h2>Manual label</h2><span class="faint">orange <b style="color:var(--diverge)">≠ heuristic</b> marks fields you changed from the machine guess</span></div>
+
+          <div class="field-group">
+            <div class="group-title">Classification</div>
+            <div class="grid">
+              <div class="field"><label>Policy Topic</label>
+                <select id="policy_topic">
+                  <option value="">(empty)</option>
+                  <option>refund</option><option>reissue_change</option><option>no_show</option>
+                  <option>go_show</option><option>cancellation</option><option>waiver</option><option>other</option>
+                </select>
+              </div>
+              <div class="field"><label>Action</label>
+                <select id="action">
+                  <option value="">(empty)</option>
+                  <option>allowed</option><option>not_allowed</option><option>conditional</option><option>unknown</option>
+                </select>
+              </div>
+            </div>
           </div>
-          <div class="field"><label>Action</label>
-            <select id="action">
-              <option value="">(empty)</option>
-              <option>allowed</option>
-              <option>not_allowed</option>
-              <option>conditional</option>
-              <option>unknown</option>
-            </select>
+
+          <div class="field-group">
+            <div class="group-title">Penalty / financial</div>
+            <div class="grid cols-3">
+              <div class="field"><label>Penalty Type</label>
+                <select id="penalty_type">
+                  <option value="">(empty)</option>
+                  <option>fixed_amount</option><option>percentage</option><option>forfeiture</option>
+                  <option>free</option><option>fare_difference_only</option><option>tax_only</option>
+                  <option>mixed</option><option>unknown</option>
+                </select>
+              </div>
+              <div class="field"><label>Penalty Amount</label><input id="penalty_amount" type="number" step="0.01"></div>
+              <div class="field"><label>Penalty Currency</label><input id="penalty_currency" type="text" placeholder="USD"></div>
+              <div class="field"><label>Penalty Percent</label><input id="penalty_percent" type="number" step="0.01"></div>
+              <div class="field"><label>Fare Difference Required</label>
+                <select id="fare_difference_required">
+                  <option value="">(empty)</option><option value="true">true</option><option value="false">false</option>
+                </select>
+              </div>
+              <div class="field"><label>Tax Refund Rule</label><input id="tax_refund_rule" type="text" placeholder="taxes refundable"></div>
+            </div>
           </div>
-          <div class="field"><label>Penalty Type</label>
-            <select id="penalty_type">
-              <option value="">(empty)</option>
-              <option>fixed_amount</option>
-              <option>percentage</option>
-              <option>forfeiture</option>
-              <option>free</option>
-              <option>fare_difference_only</option>
-              <option>tax_only</option>
-              <option>mixed</option>
-              <option>unknown</option>
-            </select>
+
+          <div class="field-group">
+            <div class="group-title">Timing / eligibility</div>
+            <div class="grid">
+              <div class="field"><label>Time Window</label><input id="time_window" type="text" placeholder="before departure"></div>
+              <div class="field"><label>Before/After Departure</label>
+                <select id="before_after_departure">
+                  <option value="">(empty)</option>
+                  <option>before_departure</option><option>after_departure</option>
+                  <option>both</option><option>not_applicable</option><option>unknown</option>
+                </select>
+              </div>
+              <div class="field wide"><label>Eligibility Conditions (one per line)</label><textarea id="eligibility_conditions"></textarea></div>
+              <div class="field wide"><label>Exceptions (one per line)</label><textarea id="exceptions"></textarea></div>
+            </div>
           </div>
-          <div class="field"><label>Penalty Amount</label><input id="penalty_amount" type="number" step="0.01"></div>
-          <div class="field"><label>Penalty Currency</label><input id="penalty_currency" type="text" placeholder="USD"></div>
-          <div class="field"><label>Penalty Percent</label><input id="penalty_percent" type="number" step="0.01"></div>
-          <div class="field"><label>Fare Difference Required</label>
-            <select id="fare_difference_required">
-              <option value="">(empty)</option>
-              <option value="true">true</option>
-              <option value="false">false</option>
-            </select>
-          </div>
-          <div class="field"><label>Time Window</label><input id="time_window" type="text" placeholder="before departure"></div>
-          <div class="field"><label>Before/After Departure</label>
-            <select id="before_after_departure">
-              <option value="">(empty)</option>
-              <option>before_departure</option>
-              <option>after_departure</option>
-              <option>both</option>
-              <option>not_applicable</option>
-              <option>unknown</option>
-            </select>
-          </div>
-          <div class="field"><label>Tax Refund Rule</label><input id="tax_refund_rule" type="text" placeholder="taxes refundable"></div>
-          <div class="field wide">
-            <label>Penalty Tiers (time-based, optional)</label>
+
+          <div class="field-group">
+            <div class="group-title">Penalty tiers <span class="faint" style="text-transform:none; letter-spacing:0;">— optional, one row per time window when fees vary</span></div>
             <div id="penaltyTierRows" class="repeat-list"></div>
-            <div class="row" style="margin-top:8px;">
-              <button id="addPenaltyTierBtn">+ Add Tier</button>
-              <button id="addCommonTierTemplateBtn">+ Add 72h/24h/No-show Template</button>
+            <div class="btn-row" style="margin-top:9px;">
+              <button class="sm" id="addPenaltyTierBtn">+ Tier</button>
+              <button class="sm" id="addCommonTierTemplateBtn">+ 72h / 24h / No-show template</button>
             </div>
-            <div class="muted">Use one row per time window when fees vary (for example: 72h before, within 72h, no-show).</div>
           </div>
-          <div class="field wide">
-            <label>Refund Payout Options (optional)</label>
-            <div id="refundOptionRows" class="repeat-list"></div>
-            <div class="row" style="margin-top:8px;">
-              <button id="addRefundOptionBtn">+ Add Refund Option</button>
-              <button id="addCashCreditTemplateBtn">+ Add Cash vs Credit Template</button>
-            </div>
-            <div class="muted">Capture cases like original payment refund vs travel credit voucher with different fees.</div>
-          </div>
-          <div class="field wide"><label>Eligibility Conditions (one per line)</label><textarea id="eligibility_conditions"></textarea></div>
-          <div class="field wide"><label>Exceptions (one per line)</label><textarea id="exceptions"></textarea></div>
-          <div class="field wide"><label>Notes</label><textarea id="notes"></textarea></div>
-        </div>
-        <div class="row" style="margin-top:10px;">
-          <button class="primary" id="saveBtn">Save Label</button>
-          <button class="good" id="saveNextBtn">Save + Next Unlabeled</button>
-          <button id="skipBtn">Mark Skip</button>
-          <button id="skipNextBtn">Skip + Next Unlabeled</button>
-          <button id="loadHeuristicBtn">Load Heuristic Defaults</button>
-          <span class="muted" id="saveInfo"></span>
-        </div>
-        <div class="shortcut-legend muted">
-          <span>Shortcuts</span>
-          <button type="button" class="shortcut-help-btn" aria-label="Show keyboard shortcuts help">?</button>
-          <div class="shortcut-tooltip" role="note" aria-label="Keyboard shortcuts">
-            <div class="tip-row"><code>J</code> / <code>K</code> next / previous record</div>
-            <div class="tip-row"><code>Shift+J</code> / <code>Shift+K</code> next / previous unlabeled</div>
-            <div class="tip-row"><code>Ctrl+S</code> or <code>Cmd+S</code> save current label</div>
-            <div class="tip-row"><code>Shift+S</code> mark skip and jump to next unlabeled</div>
-            <div class="tip-row muted">Navigation shortcuts are disabled while typing in form fields.</div>
-          </div>
-        </div>
-      </div>
 
-      <div class="card" style="margin-top:12px;">
-        <h2>Heuristic Preview</h2>
-        <pre id="heuristicJson"></pre>
+          <div class="field-group">
+            <div class="group-title">Refund payout options <span class="faint" style="text-transform:none; letter-spacing:0;">— optional, e.g. cash vs travel-credit</span></div>
+            <div id="refundOptionRows" class="repeat-list"></div>
+            <div class="btn-row" style="margin-top:9px;">
+              <button class="sm" id="addRefundOptionBtn">+ Refund option</button>
+              <button class="sm" id="addCashCreditTemplateBtn">+ Cash vs credit template</button>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <div class="group-title">Notes</div>
+            <div class="field wide"><textarea id="notes" placeholder="Anything ambiguous, or why you diverged from the heuristic…"></textarea></div>
+          </div>
+        </div>
+
+        <details class="heur">
+          <summary>Heuristic prediction (raw JSON)</summary>
+          <pre id="heuristicJson">{}</pre>
+        </details>
+
+        <div class="actionbar">
+          <button class="primary" id="saveBtn">Save label <kbd style="margin-left:4px;">⌘S</kbd></button>
+          <button class="good" id="saveNextBtn">Save + next to-do <kbd style="margin-left:4px;">⇧↵</kbd></button>
+          <button class="sm" id="skipBtn">Skip</button>
+          <button class="sm" id="skipNextBtn">Skip + next</button>
+          <button class="ghost sm" id="loadHeuristicBtn">Load heuristic defaults</button>
+          <span class="muted" id="saveInfo" style="margin-left:auto;"></span>
+        </div>
       </div>
     </main>
   </div>
@@ -405,6 +420,7 @@
       baselineFormStateJson: "",
       isDirty: false,
       suspendFormEvents: false,
+      heuristicCompareJson: "",  // heuristic snapshot for divergence highlighting
     };
 
     const formFields = [
@@ -426,30 +442,39 @@
       box.className = "status" + (type ? " " + type : "");
     }
 
-    function splitLines(text) {
-      return (text || "").split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+    function splitLines(text) { return (text || "").split(/\r?\n/).map(s => s.trim()).filter(Boolean); }
+    function joinLines(values) { return Array.isArray(values) ? values.join("\n") : ""; }
+    function parseTriBool(value) { if (value === "true") return true; if (value === "false") return false; return null; }
+
+    function escapeHtml(s) {
+      return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
     }
 
-    function joinLines(values) {
-      return Array.isArray(values) ? values.join("\n") : "";
-    }
-
-    function parseTriBool(value) {
-      if (value === "true") return true;
-      if (value === "false") return false;
-      return null;
+    /* ---- source-text highlighting (read-only, helps the eye find answers) ---- */
+    function highlightPolicyText(text) {
+      let html = escapeHtml(text || "");
+      // negatives / non-refundable first (longest, most specific)
+      html = html.replace(/\b(non[-\s]?refundable|not\s+permitted|not\s+allowed|no\s+refunds?|prohibited|forfeit(?:ure|ed)?|cannot\s+be\s+(?:changed|refunded)|not\s+available)\b/gi,
+        m => `<mark class="m-neg">${m}</mark>`);
+      // money: USD 50 / $50 / 35.00 EUR / 20%
+      html = html.replace(/(\b(?:USD|EUR|GBP|AED|SAR|INR|PKR|BDT|CAD|AUD|THB|MYR|OMR)\s?\d[\d,]*(?:\.\d+)?\b|\$\s?\d[\d,]*(?:\.\d+)?|\b\d+(?:\.\d+)?\s?%)/g,
+        m => `<mark class="m-money">${m}</mark>`);
+      // time windows / deadlines
+      html = html.replace(/\b(\d+\s?(?:hours?|hrs?|days?|months?)\s*(?:before|prior to|after)?(?:\s+departure)?|before\s+departure|after\s+departure|prior\s+to\s+departure|within\s+\d+\s?(?:hours?|hrs?|days?)|no[-\s]?show|go[-\s]?show)\b/gi,
+        m => `<mark class="m-time">${m}</mark>`);
+      // policy verbs
+      html = html.replace(/\b(refundable|refunds?|reissue|rebook|re-book|changes?|cancellations?|cancel|waivers?|waive)\b/gi,
+        m => `<mark class="m-verb">${m}</mark>`);
+      return html;
     }
 
     function optionHtml(value, label, selected) {
       const isSelected = selected === value ? " selected" : "";
       return `<option value="${escapeHtml(value)}"${isSelected}>${escapeHtml(label || value || "(empty)")}</option>`;
     }
-
     function selectHtml(options, selected, emptyLabel="(empty)") {
       let html = optionHtml("", emptyLabel, selected || "");
-      options.filter(v => v !== "").forEach((value) => {
-        html += optionHtml(value, value, selected || "");
-      });
+      options.filter(v => v !== "").forEach((value) => { html += optionHtml(value, value, selected || ""); });
       return html;
     }
 
@@ -459,12 +484,8 @@
       row.innerHTML = `
         <div class="repeat-row-grid">
           <div class="field"><label>Time Window</label><input class="tier_time_window" type="text" placeholder="within 72 hours" value="${escapeHtml(data.time_window || "")}"></div>
-          <div class="field"><label>Before/After</label>
-            <select class="tier_before_after">${selectHtml(beforeAfterOptions, data.before_after_departure || "")}</select>
-          </div>
-          <div class="field"><label>Penalty Type</label>
-            <select class="tier_penalty_type">${selectHtml(penaltyTypeOptions, data.penalty_type || "")}</select>
-          </div>
+          <div class="field"><label>Before/After</label><select class="tier_before_after">${selectHtml(beforeAfterOptions, data.before_after_departure || "")}</select></div>
+          <div class="field"><label>Penalty Type</label><select class="tier_penalty_type">${selectHtml(penaltyTypeOptions, data.penalty_type || "")}</select></div>
           <div class="field"><label>Penalty Amount</label><input class="tier_penalty_amount" type="number" step="0.01" value="${data.penalty_amount ?? ""}"></div>
           <div class="field"><label>Currency</label><input class="tier_penalty_currency" type="text" placeholder="USD" value="${escapeHtml(data.penalty_currency || "")}"></div>
           <div class="field"><label>Penalty Percent</label><input class="tier_penalty_percent" type="number" step="0.01" value="${data.penalty_percent ?? ""}"></div>
@@ -477,25 +498,16 @@
           </div>
           <div class="field"><label>Notes</label><input class="tier_notes" type="text" placeholder="segment/fare basis notes" value="${escapeHtml(data.notes || "")}"></div>
         </div>
-        <div class="repeat-row-actions"><button class="remove-row-btn">Remove</button></div>
+        <div class="repeat-row-actions"><button class="remove-row-btn sm">Remove</button></div>
       `;
-      row.querySelector(".remove-row-btn").addEventListener("click", () => {
-        row.remove();
-        onFormInputChange();
-      });
+      row.querySelector(".remove-row-btn").addEventListener("click", () => { row.remove(); onFormInputChange(); });
       el("penaltyTierRows").appendChild(row);
     }
-
     function setPenaltyTiers(rows = []) {
-      const container = el("penaltyTierRows");
-      container.innerHTML = "";
-      if (!Array.isArray(rows) || rows.length === 0) {
-        createPenaltyTierRow({});
-        return;
-      }
+      const c = el("penaltyTierRows"); c.innerHTML = "";
+      if (!Array.isArray(rows) || rows.length === 0) { createPenaltyTierRow({}); return; }
       rows.forEach((row) => createPenaltyTierRow(row || {}));
     }
-
     function collectPenaltyTiers() {
       const rows = [];
       el("penaltyTierRows").querySelectorAll(".repeat-row").forEach((row) => {
@@ -509,8 +521,7 @@
           fare_difference_required: parseTriBool(row.querySelector(".tier_fare_diff").value),
           notes: row.querySelector(".tier_notes").value.trim() || null,
         };
-        const hasValue = Object.values(item).some((v) => v !== null);
-        if (hasValue) rows.push(item);
+        if (Object.values(item).some((v) => v !== null)) rows.push(item);
       });
       return rows;
     }
@@ -528,37 +539,24 @@
               ${optionHtml("false", "false", data.allowed === false ? "false" : "")}
             </select>
           </div>
-          <div class="field"><label>Fee Type</label>
-            <select class="opt_fee_type">${selectHtml(penaltyTypeOptions, data.fee_type || "")}</select>
-          </div>
+          <div class="field"><label>Fee Type</label><select class="opt_fee_type">${selectHtml(penaltyTypeOptions, data.fee_type || "")}</select></div>
           <div class="field"><label>Fee Amount</label><input class="opt_fee_amount" type="number" step="0.01" value="${data.fee_amount ?? ""}"></div>
           <div class="field"><label>Fee Currency</label><input class="opt_fee_currency" type="text" placeholder="USD" value="${escapeHtml(data.fee_currency || "")}"></div>
           <div class="field"><label>Fee Percent</label><input class="opt_fee_percent" type="number" step="0.01" value="${data.fee_percent ?? ""}"></div>
           <div class="field"><label>Time Window</label><input class="opt_time_window" type="text" placeholder="within 24 hours" value="${escapeHtml(data.time_window || "")}"></div>
-          <div class="field"><label>Before/After</label>
-            <select class="opt_before_after">${selectHtml(beforeAfterOptions, data.before_after_departure || "")}</select>
-          </div>
+          <div class="field"><label>Before/After</label><select class="opt_before_after">${selectHtml(beforeAfterOptions, data.before_after_departure || "")}</select></div>
           <div class="field" style="grid-column: 1 / -1;"><label>Notes</label><input class="opt_notes" type="text" placeholder="e.g., credit voucher issued to wallet" value="${escapeHtml(data.notes || "")}"></div>
         </div>
-        <div class="repeat-row-actions"><button class="remove-row-btn">Remove</button></div>
+        <div class="repeat-row-actions"><button class="remove-row-btn sm">Remove</button></div>
       `;
-      row.querySelector(".remove-row-btn").addEventListener("click", () => {
-        row.remove();
-        onFormInputChange();
-      });
+      row.querySelector(".remove-row-btn").addEventListener("click", () => { row.remove(); onFormInputChange(); });
       el("refundOptionRows").appendChild(row);
     }
-
     function setRefundOptions(rows = []) {
-      const container = el("refundOptionRows");
-      container.innerHTML = "";
-      if (!Array.isArray(rows) || rows.length === 0) {
-        createRefundOptionRow({});
-        return;
-      }
+      const c = el("refundOptionRows"); c.innerHTML = "";
+      if (!Array.isArray(rows) || rows.length === 0) { createRefundOptionRow({}); return; }
       rows.forEach((row) => createRefundOptionRow(row || {}));
     }
-
     function collectRefundOptions() {
       const rows = [];
       el("refundOptionRows").querySelectorAll(".repeat-row").forEach((row) => {
@@ -573,8 +571,7 @@
           before_after_departure: row.querySelector(".opt_before_after").value || null,
           notes: row.querySelector(".opt_notes").value.trim() || null,
         };
-        const hasValue = Object.values(item).some((v) => v !== null);
-        if (hasValue) rows.push(item);
+        if (Object.values(item).some((v) => v !== null)) rows.push(item);
       });
       return rows;
     }
@@ -584,56 +581,69 @@
       return state.rows[state.selectedIndex];
     }
 
-    function draftStorageKey(recordId) {
-      return `policy-label-draft:${recordId}`;
-    }
-
-    function safeLocalStorageGet(key) {
-      try { return window.localStorage.getItem(key); } catch (_) { return null; }
-    }
-
-    function safeLocalStorageSet(key, value) {
-      try { window.localStorage.setItem(key, value); } catch (_) {}
-    }
-
-    function safeLocalStorageRemove(key) {
-      try { window.localStorage.removeItem(key); } catch (_) {}
-    }
+    function draftStorageKey(recordId) { return `policy-label-draft:${recordId}`; }
+    function safeLocalStorageGet(k) { try { return window.localStorage.getItem(k); } catch (_) { return null; } }
+    function safeLocalStorageSet(k, v) { try { window.localStorage.setItem(k, v); } catch (_) {} }
+    function safeLocalStorageRemove(k) { try { window.localStorage.removeItem(k); } catch (_) {} }
 
     function renderQueue() {
       const list = el("queueList");
       list.innerHTML = "";
       state.rows.forEach((row, idx) => {
         const b = document.createElement("button");
-        b.className = "queue-item" + (idx === state.selectedIndex ? " active" : "");
+        b.className = "queue-item" + (idx === state.selectedIndex ? " active" : "")
+          + (row.is_skipped ? " is-skipped" : (row.is_labeled ? " is-labeled" : ""));
         b.onclick = () => { selectIndex(idx); };
         const tags = [];
-        if (row.is_skipped) tags.push('<span class="badge">skipped</span>');
-        else if (row.is_labeled) tags.push('<span class="badge done">labeled</span>');
-        tags.push(`<span class="badge">${escapeHtml(row.document_type || "unknown")}</span>`);
-        if (row.carrier) tags.push(`<span class="badge">${escapeHtml(row.carrier)}</span>`);
-        if (row.supplier) tags.push(`<span class="badge">${escapeHtml(row.supplier)}</span>`);
+        if (row.is_skipped) tags.push('<span class="badge skip">skip</span>');
+        else if (row.is_labeled) tags.push('<span class="badge done">✓</span>');
+        if (row.carrier) tags.push(`<span class="badge carrier">${escapeHtml(row.carrier)}</span>`);
+        tags.push(`<span class="badge">${escapeHtml(row.document_type || "?")}</span>`);
         b.innerHTML = `
-          <div style="font-size:12px; color:#5b6670;">${tags.join(" ")}</div>
-          <div style="margin-top:6px; font-weight:600; font-size:13px;">${escapeHtml(row.record_id)}</div>
-          <div style="margin-top:4px; font-size:12px; color:#333;">${escapeHtml((row.clause_text || "").slice(0, 140))}</div>
+          <div class="qi-top">${tags.join(" ")}<span class="qi-idx">#${idx + 1}</span></div>
+          <div class="qi-text">${escapeHtml((row.clause_text || "").slice(0, 150))}</div>
         `;
         list.appendChild(b);
       });
     }
 
+    function renderCarrierBars() {
+      const byCarrier = {};
+      state.rows.forEach((r) => {
+        const c = r.carrier || "—";
+        byCarrier[c] = byCarrier[c] || { total: 0, done: 0 };
+        byCarrier[c].total++;
+        if (r.is_labeled) byCarrier[c].done++;
+      });
+      const wrap = el("carrierBars");
+      wrap.innerHTML = "";
+      Object.keys(byCarrier).sort().forEach((c) => {
+        const { total, done } = byCarrier[c];
+        const pct = total ? Math.round((done / total) * 100) : 0;
+        const div = document.createElement("div");
+        div.className = "carrier-bar";
+        div.innerHTML = `<span class="cb-code">${escapeHtml(c)}</span>
+          <span class="cb-track"><span class="cb-fill" style="width:${pct}%"></span></span>
+          <span class="cb-num">${done}/${total}</span>`;
+        wrap.appendChild(div);
+      });
+    }
+
     function renderMeta() {
       const total = state.rows.length;
-      const labeled = state.rows.filter(r => r.is_labeled).length;
+      const labeled = state.rows.filter(r => r.is_labeled && !r.is_skipped).length;
       const skipped = state.rows.filter(r => r.is_skipped).length;
       const unlabeled = state.rows.filter(r => !r.is_labeled).length;
-      const pct = total ? Math.round((labeled / total) * 100) : 0;
-      el("queueMeta").textContent = `${labeled}/${total} processed in current view (${pct}%)`;
-      el("statLabeled").textContent = `Labeled: ${labeled}`;
-      el("statSkipped").textContent = `Skipped: ${skipped}`;
-      el("statUnlabeled").textContent = `Unlabeled: ${unlabeled}`;
+      const processed = labeled + skipped;
+      const pct = total ? Math.round((processed / total) * 100) : 0;
+      el("queueMeta").textContent = `${processed}/${total} processed (${pct}%)`;
+      el("statLabeledN").textContent = labeled;
+      el("statSkippedN").textContent = skipped;
+      el("statUnlabeledN").textContent = unlabeled;
       el("queueProgressFill").style.width = `${pct}%`;
     }
+
+    function setField(id, value) { const n = el(id); if (n) n.value = value == null ? "" : String(value); }
 
     function fillFormFromRow(row, useManualPreferred=true) {
       if (!row) return;
@@ -641,7 +651,6 @@
       const manual = useManualPreferred ? (row.manual_label || null) : null;
       const heuristic = row.heuristic || {};
       const source = manual || heuristic || {};
-
       setField("policy_topic", source.policy_topic || "");
       setField("action", source.action || "");
       setField("penalty_type", source.penalty_type || "");
@@ -658,12 +667,6 @@
       setRefundOptions(source.refund_payout_options || []);
       setField("notes", (manual && manual.notes) || "");
       state.suspendFormEvents = false;
-    }
-
-    function setField(id, value) {
-      const node = el(id);
-      if (!node) return;
-      node.value = value == null ? "" : String(value);
     }
 
     function getFormPayload(row) {
@@ -714,36 +717,47 @@
         notes: el("notes").value || "",
       };
     }
-
-    function formStateJson() {
-      return JSON.stringify(collectFormState());
-    }
-
-    function setBaselineFromCurrentForm() {
-      state.baselineFormStateJson = formStateJson();
-      updateDirtyState();
-    }
+    function formStateJson() { return JSON.stringify(collectFormState()); }
+    function setBaselineFromCurrentForm() { state.baselineFormStateJson = formStateJson(); updateDirtyState(); }
 
     function updateDirtyState() {
       state.isDirty = !!currentRow() && formStateJson() !== (state.baselineFormStateJson || "");
-      const base = (el("saveInfo").textContent || "").replace(/\s*Unsaved changes\.$/, "");
-      el("saveInfo").textContent = state.isDirty
-        ? `${base}${base ? " " : ""}Unsaved changes.`
-        : base;
+      const base = (el("saveInfo").textContent || "").replace(/\s*•\s*Unsaved$/, "");
+      el("saveInfo").textContent = state.isDirty ? `${base}${base ? " " : ""}• Unsaved` : base;
     }
+    function clearSaveInfoIfDirtyNoticeOnly() { if (el("saveInfo").textContent === "• Unsaved") el("saveInfo").textContent = ""; }
 
-    function clearSaveInfoIfDirtyNoticeOnly() {
-      if (el("saveInfo").textContent === "Unsaved changes.") {
-        el("saveInfo").textContent = "";
-      }
+    /* ---- divergence highlight: compare each simple field to the heuristic ---- */
+    const SIMPLE_DIVERGE_FIELDS = [
+      "policy_topic","action","penalty_type","penalty_amount","penalty_currency",
+      "penalty_percent","fare_difference_required","time_window","before_after_departure","tax_refund_rule"
+    ];
+    function heuristicValueAsString(h, id) {
+      let v = h ? h[id] : undefined;
+      if (v === true) v = "true"; else if (v === false) v = "false";
+      return v == null ? "" : String(v);
+    }
+    function updateDivergence() {
+      const row = currentRow();
+      const h = row ? (row.heuristic || {}) : {};
+      SIMPLE_DIVERGE_FIELDS.forEach((id) => {
+        const node = el(id);
+        if (!node) return;
+        const wrap = node.closest(".field");
+        if (!wrap) return;
+        const cur = node.value || "";
+        const heur = heuristicValueAsString(h, id);
+        // only flag when the current value is non-empty AND differs from heuristic
+        if (cur !== "" && cur !== heur) wrap.classList.add("diverged");
+        else wrap.classList.remove("diverged");
+      });
     }
 
     function applyDraftToForm(row) {
       if (!row) return false;
       const raw = safeLocalStorageGet(draftStorageKey(row.record_id));
       if (!raw) return false;
-      let draft;
-      try { draft = JSON.parse(raw); } catch (_) { return false; }
+      let draft; try { draft = JSON.parse(raw); } catch (_) { return false; }
       if (!draft || typeof draft !== "object") return false;
       state.suspendFormEvents = true;
       setField("policy_topic", draft.policy_topic || "");
@@ -764,165 +778,119 @@
       state.suspendFormEvents = false;
       return true;
     }
-
     function persistDraftForCurrentRow() {
-      const row = currentRow();
-      if (!row) return;
+      const row = currentRow(); if (!row) return;
       safeLocalStorageSet(draftStorageKey(row.record_id), formStateJson());
     }
-
-    function maybeConfirmDiscardChanges(contextLabel="navigate") {
+    function maybeConfirmDiscardChanges(ctx="navigate") {
       if (!state.isDirty) return true;
-      return window.confirm(`You have unsaved changes. Continue and discard unsaved changes to ${contextLabel}?`);
+      return window.confirm(`You have unsaved changes. Discard them to ${ctx}?`);
     }
 
     function renderRecord() {
       const row = currentRow();
       if (!row) {
-        el("recordHeader").textContent = "No record selected";
+        el("recordHeaderMeta").textContent = "";
+        el("recIdChip").textContent = "No record";
+        el("recStatusBadge").textContent = "—";
+        el("recStatusBadge").className = "badge";
         el("chunkText").textContent = "";
         el("clauseText").textContent = "";
         el("heuristicJson").textContent = "{}";
         formFields.forEach(id => setField(id, ""));
-        setPenaltyTiers([]);
-        setRefundOptions([]);
-        state.baselineFormStateJson = "";
-        state.isDirty = false;
+        setPenaltyTiers([]); setRefundOptions([]);
+        state.baselineFormStateJson = ""; state.isDirty = false;
+        updateDivergence();
         return;
       }
-      el("recordHeader").innerHTML = `
-        <span class="badge ${row.is_labeled && !row.is_skipped ? "done" : ""}">${row.is_skipped ? "skipped" : (row.is_labeled ? "labeled" : "unlabeled")}</span>
-        <span class="badge">${escapeHtml(row.record_id)}</span>
-        <span class="badge">${escapeHtml(row.source_id || "unknown source")}</span>
-      `;
-      el("chunkText").textContent = row.chunk_text || "";
-      el("clauseText").textContent = row.clause_text || "";
+      const statusLabel = row.is_skipped ? "skipped" : (row.is_labeled ? "labeled" : "unlabeled");
+      const statusCls = row.is_skipped ? "skip" : (row.is_labeled ? "done" : "un");
+      el("recStatusBadge").textContent = statusLabel;
+      el("recStatusBadge").className = "badge " + statusCls;
+      el("recIdChip").textContent = row.record_id;
+      el("recordHeaderMeta").textContent =
+        `${row.carrier || "—"} · ${row.document_type || "?"} · ${row.source_id || "?"}`;
+      // highlighted source text (innerHTML is safe: escaped first, then wrapped)
+      el("clauseText").innerHTML = highlightPolicyText(row.clause_text || "");
+      el("chunkText").innerHTML = highlightPolicyText(row.chunk_text || "");
       el("heuristicJson").textContent = JSON.stringify(row.heuristic || {}, null, 2);
       fillFormFromRow(row, true);
       const draftLoaded = applyDraftToForm(row);
-      if (draftLoaded) {
-        el("saveInfo").textContent = "Loaded autosaved draft.";
-      } else {
-        el("saveInfo").textContent = row.manual_label ? "Loaded existing manual label." : "";
-      }
+      el("saveInfo").textContent = draftLoaded
+        ? "Loaded autosaved draft."
+        : (row.manual_label ? "Loaded existing manual label." : "");
       setBaselineFromCurrentForm();
       if (draftLoaded) {
-        // Draft differs from saved/manual baseline logically, so mark dirty and warn on navigation.
-        // Baseline should stay based on saved/manual values, not the draft.
         fillFormFromRow(row, true);
-        const manualOrHeuristicBaseline = formStateJson();
+        const baseline = formStateJson();
         if (applyDraftToForm(row)) {
-          state.baselineFormStateJson = manualOrHeuristicBaseline;
+          state.baselineFormStateJson = baseline;
           updateDirtyState();
-          el("saveInfo").textContent = "Loaded autosaved draft. Unsaved changes.";
+          el("saveInfo").textContent = "Loaded autosaved draft. • Unsaved";
         }
       }
+      updateDivergence();
     }
 
-    function renderAll() {
-      renderMeta();
-      renderQueue();
-      renderRecord();
-    }
+    function renderAll() { renderMeta(); renderCarrierBars(); renderQueue(); renderRecord(); }
 
-    function escapeHtml(s) {
-      return String(s ?? "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;");
-    }
-
-    async function loadQueue() {
-      return loadQueueInternal(false);
-    }
-
+    async function loadQueue() { return loadQueueInternal(false); }
     async function loadQueueInternal(skipConfirm=false) {
       if (!skipConfirm && !maybeConfirmDiscardChanges("reload queue")) return;
-      setStatus("Loading labeling queue...");
+      setStatus("Loading labeling queue…");
       const url = `/labeling/api/queue?include_labeled=${state.includeLabeled ? "true" : "false"}`;
       const res = await fetch(url);
       const data = await res.json();
-      if (!res.ok) {
-        setStatus(`Failed to load queue: ${data.detail || res.statusText}`, "error");
-        return;
-      }
+      if (!res.ok) { setStatus(`Failed to load queue: ${data.detail || res.statusText}`, "error"); return; }
       state.rows = data.rows || [];
       if (state.rows.length === 0) {
-        state.selectedIndex = -1;
-        renderAll();
+        state.selectedIndex = -1; renderAll();
         setStatus("Queue is empty. Generate a real-pilot labeling queue first.", "error");
         return;
       }
-      if (state.selectedIndex < 0 || state.selectedIndex >= state.rows.length) {
-        state.selectedIndex = 0;
-      }
+      if (state.selectedIndex < 0 || state.selectedIndex >= state.rows.length) state.selectedIndex = 0;
       renderAll();
-      setStatus(`Loaded ${data.returned_records} queue records from ${data.queue_path}`, "ok");
+      setStatus(`Loaded ${data.returned_records} records · ${data.queue_path}`, "ok");
     }
 
     async function saveCurrent() {
-      const row = currentRow();
-      if (!row) return false;
+      const row = currentRow(); if (!row) return false;
       const payload = getFormPayload(row);
       payload.label_status = "labeled";
       return savePayload(row, payload);
     }
-
     async function savePayload(row, payload) {
-      setStatus(`Saving ${row.record_id}...`);
+      setStatus(`Saving ${row.record_id}…`);
       const res = await fetch("/labeling/api/save", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
       });
       const data = await res.json();
-      if (!res.ok) {
-        setStatus(`Save failed: ${data.detail || res.statusText}`, "error");
-        return false;
-      }
+      if (!res.ok) { setStatus(`Save failed: ${data.detail || res.statusText}`, "error"); return false; }
       row.is_labeled = true;
       row.is_skipped = String(data.record.label_status || "").toLowerCase() === "skip";
       row.manual_label = data.record;
       safeLocalStorageRemove(draftStorageKey(row.record_id));
       renderAll();
       setStatus(`Saved ${row.record_id} to manual gold`, "ok");
-      el("saveInfo").textContent = data.updated ? "Updated existing manual label." : "Created manual label.";
+      el("saveInfo").textContent = data.updated ? "Updated existing label." : "Created label.";
       return true;
     }
-
-    async function saveAndNextUnlabeled() {
-      const ok = await saveCurrent();
-      if (ok) nextUnlabeled();
-    }
+    async function saveAndNextUnlabeled() { if (await saveCurrent()) nextUnlabeled(); }
 
     async function markSkipCurrent() {
-      const row = currentRow();
-      if (!row) return false;
+      const row = currentRow(); if (!row) return false;
       const payload = {
-        record_id: row.record_id,
-        source_id: row.source_id || null,
-        document_id: row.document_id || null,
-        document_type: row.document_type || null,
-        carrier: row.carrier || null,
-        supplier: row.supplier || null,
-        offer_or_circular_id: row.offer_or_circular_id || null,
-        chunk_id: row.chunk_id || null,
-        clause_text: row.clause_text || null,
-        label_status: "skip",
+        record_id: row.record_id, source_id: row.source_id || null, document_id: row.document_id || null,
+        document_type: row.document_type || null, carrier: row.carrier || null, supplier: row.supplier || null,
+        offer_or_circular_id: row.offer_or_circular_id || null, chunk_id: row.chunk_id || null,
+        clause_text: row.clause_text || null, label_status: "skip",
         notes: el("notes").value || "Skipped as ambiguous clause",
       };
       const ok = await savePayload(row, payload);
-      if (ok) {
-        el("saveInfo").textContent = "Marked as skip.";
-      }
+      if (ok) el("saveInfo").textContent = "Marked as skip.";
       return ok;
     }
-
-    async function skipAndNextUnlabeled() {
-      const ok = await markSkipCurrent();
-      if (ok) nextUnlabeled();
-    }
+    async function skipAndNextUnlabeled() { if (await markSkipCurrent()) nextUnlabeled(); }
 
     function next(delta) {
       if (!state.rows.length) return;
@@ -930,120 +898,72 @@
       state.selectedIndex = Math.max(0, Math.min(state.rows.length - 1, state.selectedIndex + delta));
       renderAll();
     }
-
     function selectIndex(idx) {
       if (idx === state.selectedIndex) return;
       if (!maybeConfirmDiscardChanges("move to another record")) return;
       state.selectedIndex = Math.max(0, Math.min(state.rows.length - 1, idx));
       renderAll();
     }
-
     function nextUnlabeled() {
       if (!state.rows.length) return;
       if (!maybeConfirmDiscardChanges("move to another record")) return;
-      for (let i = state.selectedIndex + 1; i < state.rows.length; i++) {
-        if (!state.rows[i].is_labeled) { state.selectedIndex = i; renderAll(); return; }
-      }
-      for (let i = 0; i <= state.selectedIndex; i++) {
-        if (!state.rows[i].is_labeled) { state.selectedIndex = i; renderAll(); return; }
-      }
-      setStatus("All records in current view are labeled.", "ok");
+      for (let i = state.selectedIndex + 1; i < state.rows.length; i++) if (!state.rows[i].is_labeled) { state.selectedIndex = i; renderAll(); return; }
+      for (let i = 0; i <= state.selectedIndex; i++) if (!state.rows[i].is_labeled) { state.selectedIndex = i; renderAll(); return; }
+      setStatus("All records in current view are labeled. 🎉", "ok");
     }
-
     function previousUnlabeled() {
       if (!state.rows.length) return;
       if (!maybeConfirmDiscardChanges("move to another record")) return;
-      for (let i = state.selectedIndex - 1; i >= 0; i--) {
-        if (!state.rows[i].is_labeled) { state.selectedIndex = i; renderAll(); return; }
-      }
-      for (let i = state.rows.length - 1; i >= state.selectedIndex; i--) {
-        if (!state.rows[i].is_labeled) { state.selectedIndex = i; renderAll(); return; }
-      }
-      setStatus("All records in current view are labeled.", "ok");
+      for (let i = state.selectedIndex - 1; i >= 0; i--) if (!state.rows[i].is_labeled) { state.selectedIndex = i; renderAll(); return; }
+      for (let i = state.rows.length - 1; i >= state.selectedIndex; i--) if (!state.rows[i].is_labeled) { state.selectedIndex = i; renderAll(); return; }
+      setStatus("All records in current view are labeled. 🎉", "ok");
     }
 
     function loadHeuristicIntoForm() {
-      const row = currentRow();
-      if (!row) return;
+      const row = currentRow(); if (!row) return;
       fillFormFromRow(row, false);
+      onFormInputChange();
       el("saveInfo").textContent = "Loaded heuristic values into form.";
     }
 
     function addCommonPenaltyTierTemplate() {
-      createPenaltyTierRow({
-        time_window: "72 hours before departure",
-        before_after_departure: "before_departure",
-        penalty_type: "fixed_amount",
-      });
-      createPenaltyTierRow({
-        time_window: "within 72 hours of departure",
-        before_after_departure: "before_departure",
-        penalty_type: "fixed_amount",
-      });
-      createPenaltyTierRow({
-        time_window: "no-show / after departure",
-        before_after_departure: "after_departure",
-        penalty_type: "fixed_amount",
-      });
+      createPenaltyTierRow({ time_window: "72 hours before departure", before_after_departure: "before_departure", penalty_type: "fixed_amount" });
+      createPenaltyTierRow({ time_window: "within 72 hours of departure", before_after_departure: "before_departure", penalty_type: "fixed_amount" });
+      createPenaltyTierRow({ time_window: "no-show / after departure", before_after_departure: "after_departure", penalty_type: "fixed_amount" });
       onFormInputChange();
     }
-
     function addCashCreditTemplate() {
-      createRefundOptionRow({
-        method: "original_payment",
-        allowed: true,
-        fee_type: "fixed_amount",
-      });
-      createRefundOptionRow({
-        method: "travel_credit",
-        allowed: true,
-        fee_type: "free",
-        notes: "Credit voucher to account wallet",
-      });
+      createRefundOptionRow({ method: "original_payment", allowed: true, fee_type: "fixed_amount" });
+      createRefundOptionRow({ method: "travel_credit", allowed: true, fee_type: "free", notes: "Credit voucher to account wallet" });
       onFormInputChange();
     }
 
-    function isTypingTarget(target) {
-      if (!target) return false;
-      const tag = (target.tagName || "").toUpperCase();
-      return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || !!target.isContentEditable;
+    function isTypingTarget(t) {
+      if (!t) return false;
+      const tag = (t.tagName || "").toUpperCase();
+      return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || !!t.isContentEditable;
     }
 
     document.addEventListener("keydown", async (e) => {
       const key = (e.key || "").toLowerCase();
       const typing = isTypingTarget(e.target);
-
-      if ((e.ctrlKey || e.metaKey) && key === "s") {
-        e.preventDefault();
-        await saveCurrent();
-        return;
-      }
-
+      if ((e.ctrlKey || e.metaKey) && key === "s") { e.preventDefault(); await saveCurrent(); return; }
+      // Shift+Enter = save + next to-do (works even from a field, like a form submit)
+      if (e.shiftKey && key === "enter") { e.preventDefault(); await saveAndNextUnlabeled(); return; }
       if (e.altKey || e.ctrlKey || e.metaKey) return;
       if (typing) return;
-
-      if (e.shiftKey && key === "j") {
-        e.preventDefault();
-        nextUnlabeled();
-      } else if (e.shiftKey && key === "k") {
-        e.preventDefault();
-        previousUnlabeled();
-      } else if (e.shiftKey && key === "s") {
-        e.preventDefault();
-        await skipAndNextUnlabeled();
-      } else if (key === "j") {
-        e.preventDefault();
-        next(1);
-      } else if (key === "k") {
-        e.preventDefault();
-        next(-1);
-      }
+      if (e.shiftKey && key === "j") { e.preventDefault(); nextUnlabeled(); }
+      else if (e.shiftKey && key === "k") { e.preventDefault(); previousUnlabeled(); }
+      else if (e.shiftKey && key === "s") { e.preventDefault(); await skipAndNextUnlabeled(); }
+      else if (key === "j") { e.preventDefault(); next(1); }
+      else if (key === "k") { e.preventDefault(); next(-1); }
     });
 
     function onFormInputChange() {
       if (state.suspendFormEvents) return;
       clearSaveInfoIfDirtyNoticeOnly();
       updateDirtyState();
+      updateDivergence();
       persistDraftForCurrentRow();
     }
 
@@ -1061,36 +981,26 @@
     el("addRefundOptionBtn").addEventListener("click", () => { createRefundOptionRow({}); onFormInputChange(); });
     el("addCashCreditTemplateBtn").addEventListener("click", addCashCreditTemplate);
     el("showLabeledChk").addEventListener("change", (e) => {
-      if (!maybeConfirmDiscardChanges("change queue filter")) {
-        e.target.checked = state.includeLabeled;
-        return;
-      }
+      if (!maybeConfirmDiscardChanges("change queue filter")) { e.target.checked = state.includeLabeled; return; }
       state.includeLabeled = !!e.target.checked;
       state.selectedIndex = 0;
       loadQueueInternal(true);
     });
 
     formFields.forEach((id) => {
-      const node = el(id);
-      if (!node) return;
+      const node = el(id); if (!node) return;
       node.addEventListener("input", onFormInputChange);
       node.addEventListener("change", onFormInputChange);
     });
-    ["penaltyTierRows", "refundOptionRows"].forEach((containerId) => {
-      const node = el(containerId);
-      if (!node) return;
+    ["penaltyTierRows", "refundOptionRows"].forEach((cid) => {
+      const node = el(cid); if (!node) return;
       node.addEventListener("input", onFormInputChange);
       node.addEventListener("change", onFormInputChange);
     });
 
-    window.addEventListener("beforeunload", (e) => {
-      if (!state.isDirty) return;
-      e.preventDefault();
-      e.returnValue = "";
-    });
+    window.addEventListener("beforeunload", (e) => { if (!state.isDirty) return; e.preventDefault(); e.returnValue = ""; });
 
-    setPenaltyTiers([]);
-    setRefundOptions([]);
+    setPenaltyTiers([]); setRefundOptions([]);
     loadQueue().catch(err => setStatus(`Unexpected error: ${err}`, "error"));
   </script>
 </body>

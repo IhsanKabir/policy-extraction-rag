@@ -1,4 +1,5 @@
 import argparse
+import collections
 import json
 import re
 from pathlib import Path
@@ -85,6 +86,90 @@ def split_chunk_into_clauses(text: str) -> List[str]:
     if not clauses and normalized_full:
         return [normalized_full]
     return clauses
+
+
+# ---------------------------------------------------------------------------
+# Fine, clause-level splitting (granularity="clause").
+#
+# PDF/HTML-extracted fare rules are often one long run of "Label: value Label:
+# value ..." with no sentence punctuation, semicolons, or newlines, so the
+# sentence/semicolon splitter above returns the whole chunk as one clause. The
+# functions below split such text into one atomic rule per record by FIRST
+# mining the recurring colon-terminated labels from the corpus (a data-driven
+# gazetteer), then splitting only at those known label boundaries. This avoids
+# the over-splitting a naive "Capitalized word + colon" regex causes when a
+# value also starts with a capital (e.g., "Refund/Cancellation: Not Available").
+# ---------------------------------------------------------------------------
+
+_GAZETTEER_STOP = ("http", "popular", "submit", "desk", "search", "www", "note")
+_LABEL_CANDIDATE_RE = re.compile(r"([A-Za-z][A-Za-z/ \-]{0,40}?):")
+
+
+def mine_label_gazetteer(texts: List[str], min_count: int = 3, max_words: int = 4) -> set:
+    """Mine recurring colon-terminated labels from a corpus of chunk texts.
+
+    A label candidate is the trailing 1..max_words words immediately before a
+    colon. Candidates are kept when they recur (>= min_count), start uppercase,
+    are short, and are not boilerplate (URLs, nav). A candidate is dropped when a
+    proper suffix of it recurs MORE often (this removes value+label merges such
+    as "Not Available Hand baggage" in favour of the real label "Hand baggage").
+    """
+    cand: "collections.Counter[str]" = collections.Counter()
+    for text in texts:
+        for match in _LABEL_CANDIDATE_RE.finditer(text or ""):
+            words = match.group(1).strip().split()
+            for n in range(1, max_words + 1):
+                if len(words) >= n:
+                    cand[" ".join(words[-n:])] += 1
+
+    kept = {
+        phrase: count
+        for phrase, count in cand.items()
+        if count >= min_count
+        and phrase[:1].isupper()
+        and len(phrase.split()) <= max_words
+        and not any(stop in phrase.lower() for stop in _GAZETTEER_STOP)
+    }
+
+    labels = set()
+    for phrase, count in kept.items():
+        words = phrase.split()
+        if any(
+            " ".join(words[n:]) in kept and kept[" ".join(words[n:])] > count
+            for n in range(1, len(words))
+        ):
+            continue
+        labels.add(phrase)
+    return labels
+
+
+def split_chunk_into_clauses_fine(text: str, labels: set) -> List[str]:
+    """Split a chunk into one atomic clause per known label boundary.
+
+    Falls back to the conservative splitter when no gazetteer labels are present
+    or none are found in the text.
+    """
+    if not labels:
+        return split_chunk_into_clauses(text)
+    alt = "|".join(re.escape(label) for label in sorted(labels, key=len, reverse=True))
+    pattern = re.compile(r"(?:^|(?<=[^A-Za-z]))(?:" + alt + r")\s*:")
+    raw = (text or "")
+    starts = [m.start() for m in pattern.finditer(raw)]
+    if not starts:
+        return split_chunk_into_clauses(text)
+
+    segments: List[str] = []
+    # keep any leading text before the first label only if it is substantive
+    if starts[0] > 0:
+        lead = _normalize_clause_text(raw[: starts[0]])
+        if lead and len(lead.split()) > 2:
+            segments.append(lead)
+    for i, start in enumerate(starts):
+        end = starts[i + 1] if i + 1 < len(starts) else len(raw)
+        seg = _normalize_clause_text(raw[start:end])
+        if seg:
+            segments.append(seg)
+    return segments or split_chunk_into_clauses(text)
 
 
 def classify_policy_topic(text: str) -> PolicyTopic:
@@ -364,17 +449,41 @@ def build_clause_record(chunk_record: dict, clause_index: int = 0) -> PolicyClau
     return base.copy(update=update_values)
 
 
-def extract_records_from_jsonl(input_path: Path, output_path: Path, mode: str = "heuristic") -> int:
-    count = 0
-    with open(input_path, "r", encoding="utf-8") as src, open(output_path, "w", encoding="utf-8") as dst:
+def extract_records_from_jsonl(
+    input_path: Path,
+    output_path: Path,
+    mode: str = "heuristic",
+    granularity: str = "chunk",
+) -> int:
+    """Extract policy-clause records from a chunk JSONL.
+
+    granularity="chunk" (default) keeps the original behaviour: split each chunk
+    with the conservative sentence/semicolon splitter (often one clause per
+    chunk for delimiter-free fare-rule text). granularity="clause" mines a
+    corpus label gazetteer and splits each chunk into one atomic rule per record.
+    """
+    chunk_records: List[dict] = []
+    with open(input_path, "r", encoding="utf-8") as src:
         for line in src:
             line = line.strip()
             if not line:
                 continue
-            chunk_record = json.loads(line)
-            clauses = split_chunk_into_clauses(chunk_record.get("text", ""))
+            chunk_records.append(json.loads(line))
+
+    labels: set = set()
+    if granularity == "clause":
+        labels = mine_label_gazetteer([c.get("text", "") for c in chunk_records])
+
+    count = 0
+    with open(output_path, "w", encoding="utf-8") as dst:
+        for chunk_record in chunk_records:
+            text = chunk_record.get("text", "")
+            if granularity == "clause":
+                clauses = split_chunk_into_clauses_fine(text, labels)
+            else:
+                clauses = split_chunk_into_clauses(text)
             if not clauses:
-                clauses = [chunk_record.get("text", "")]
+                clauses = [text]
             for clause_index, clause_text in enumerate(clauses):
                 clause_chunk_record = _chunk_record_with_clause_text(chunk_record, clause_text)
                 if mode == "stub":
@@ -401,9 +510,18 @@ def main():
         default="heuristic",
         help="Extraction mode (default: heuristic)",
     )
+    parser.add_argument(
+        "--granularity",
+        choices=["chunk", "clause"],
+        default="chunk",
+        help="chunk (default, one record per chunk) or clause (one atomic rule "
+        "per record via mined label gazetteer)",
+    )
     args = parser.parse_args()
 
-    total = extract_records_from_jsonl(Path(args.input), Path(args.output), mode=args.mode)
+    total = extract_records_from_jsonl(
+        Path(args.input), Path(args.output), mode=args.mode, granularity=args.granularity
+    )
     print(f"Wrote {total} extracted policy clause records to {args.output}")
 
 

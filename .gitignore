@@ -47,3 +47,7 @@ training_seed.dump
 # Logs
 *.log
 logs/
+
+# Server logs / editor backups
+*.out
+*.bak

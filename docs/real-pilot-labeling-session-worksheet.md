@@ -2,6 +2,52 @@
 
 Use this worksheet during a manual labeling session in the labeling UI (`/labeling`).
 
+## Labeling Conventions (decided 2026-06-08, read first)
+
+These keep the gold set consistent, which is what makes the heuristic-vs-gold comparison trustworthy.
+
+1. **One topic per record.** Each record gets exactly one `policy_topic`. Do not try to capture refund AND reissue/change AND no-show in a single record, even when one block of text mentions all of them. The chunks overlap, so the same fare rule appears across several records: label the refund aspect on one, the change aspect on another. This matches the heuristic (which predicts one topic per chunk) and keeps `compare` apples to apples.
+
+2. **Refund and Cancellation collapse to `refund`.** This corpus writes them together (for example "Refund/Cancellation: Not Available"). When a clause bundles them, label `refund`. Use `cancellation` only when the clause genuinely separates the two, for example "cancellation allowed but non-refundable", which is cancellation `allowed` plus refund `not_available`. Apply this every time.
+
+3. **Multiple fees within one topic go in the tier rows, not new topics.** If one topic has fees that vary by time (72h vs 24h vs no-show) or by method (cash vs travel credit), capture all of them in the Penalty Tiers rows (or Refund Payout Options rows) inside that one record. The repeat-lists are for variation within a topic; they do not cross topics.
+
+4. **Keep the heuristic topic when it is right.** The orange "not-equal heuristic" flag shows where you overrode the machine guess. Override only when it is genuinely wrong. This is faster and keeps the comparison honest.
+
+5. **Genuinely multi-policy chunk, one gold entry wanted?** Label the single most salient policy for that record and note the secondary rule in `notes` if it matters.
+
+## v1: finer one-clause-per-record granularity (optional, run AFTER the baseline)
+
+Per the annotation-methodology research (see `docs/annotation-methodology-research.md`),
+the cleanest fix for "one chunk mixes refund, change, and cancellation" is finer
+chunking so each record is a single atomic rule, keeping the simple one-topic
+schema. This is built and ready, but do the v0 baseline on the current 40-record
+queue first so you get the heuristic baseline number, then run v1 as a second,
+independent gold round.
+
+The extractor now has a `--granularity clause` mode (default stays `chunk`). It
+mines the recurring colon labels (Refund/Cancellation, Changes in Flight, Hand
+baggage, etc.) from the corpus and splits each chunk into one rule per record.
+
+Run the v1 round with a SEPARATE gold store so v0 and v1 stay independent:
+
+```bash
+# 1. fine clauses + fine queue (already generated; regenerate after re-ingest)
+python -m extractors.pipeline --input data/chunks.jsonl --output data/policy_clauses_fine.jsonl --mode heuristic --granularity clause
+python -m evals.real_pilot_labeling queue --clauses data/policy_clauses_fine.jsonl --output data/real_pilot_manual_labeling_queue_fine.jsonl --limit 200
+
+# 2. serve the fine queue against a SEPARATE labeling DB (keeps v0 gold intact)
+#    PowerShell:  $env:LABELING_QUEUE_PATH="data/real_pilot_manual_labeling_queue_fine.jsonl"; $env:LABELING_DB_PATH="data/labeling_fine.db"; uvicorn api.main:app
+LABELING_QUEUE_PATH=data/real_pilot_manual_labeling_queue_fine.jsonl LABELING_DB_PATH=data/labeling_fine.db uvicorn api.main:app
+
+# 3. compare v1 heuristic vs v1 gold
+python -m evals.real_pilot_labeling compare --pred data/policy_clauses_fine.jsonl --manual-gold-db data/labeling_fine.db
+```
+
+The same Labeling Conventions below still apply (one topic per record), but with
+fine granularity each record is already a single rule, so the conventions become
+natural rather than a workaround.
+
 ## Session Info
 
 - [ ] Session date:
@@ -86,6 +132,7 @@ python -m evals.real_pilot_labeling compare
 
 ## Label Quality Rules (Check During Session)
 
+- [ ] Follow the Labeling Conventions above (one topic per record; refund/cancellation collapse to `refund`; tier rows for within-topic variation)
 - [ ] Fill `policy_topic` and `action` for each labeled record
 - [ ] Fill penalty fields only when explicit in clause text
 - [ ] Fill `time_window` / `before_after_departure` when explicit
@@ -107,7 +154,7 @@ python -m evals.real_pilot_labeling compare
 - [ ] Reissue/Change:
 - [ ] No-show:
 - [ ] Go-show:
-- [ ] Cancellation:
+- [ ] Cancellation: (only when genuinely separate from refund; see Conventions)
 - [ ] Waiver:
 - [ ] Other:
 
