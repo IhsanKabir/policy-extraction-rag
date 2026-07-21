@@ -3,9 +3,16 @@ import csv
 import json
 import os
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import List, Optional, Sequence
 
-from evals.extraction_eval import DEFAULT_FIELDS, _load_jsonl_by_record_id, evaluate_extraction, evaluate_files
+from evals.extraction_eval import (
+    DEFAULT_FIELDS,
+    _load_jsonl_by_record_id,
+    citation_grounding_summary,
+    evaluate_extraction,
+    evaluate_files,
+    value_grounding_check,
+)
 from labeling_store import (
     postgres_load_manual_label_map,
     postgres_manual_label_count,
@@ -261,9 +268,18 @@ def compare_heuristic_vs_manual_gold(
             }
         result = evaluate_files(manual_gold_path, pred_path, fields=use_fields)
         result["manual_gold_backend"] = "jsonl"
+        pred_rows = _load_jsonl_by_record_id(pred_path)
     result["status"] = "ok"
     result["manual_gold_path"] = str(manual_gold_path)
     result["pred_path"] = str(pred_path)
+    # Faithfulness metrics (any method): are asserted values present in the text?
+    # NOTE: computed over ALL prediction rows in the file, not only the
+    # gold-matched subset the accuracy/PRF numbers above use.
+    result["value_grounding"] = value_grounding_check(pred_rows)
+    result["value_grounding_scope"] = "all_pred_records"
+    cited = citation_grounding_summary(pred_rows)
+    if cited is not None:
+        result["citation_grounding"] = cited
     return result
 
 

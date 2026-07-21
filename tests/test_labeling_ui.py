@@ -9,7 +9,7 @@ def test_labeling_page_loads():
     client = TestClient(app)
     res = client.get("/labeling")
     assert res.status_code == 200
-    assert "Manual Labeling" in res.text
+    assert "Policy Labeling Studio" in res.text
 
 
 def test_labeling_queue_and_save(monkeypatch, tmp_path):
