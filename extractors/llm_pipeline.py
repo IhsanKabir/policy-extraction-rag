@@ -69,9 +69,13 @@ def _repo_root() -> Path:
 
 
 def build_prompt(clause_text: str, carrier: Optional[str], document_type: str,
-                 cited: bool) -> List[dict]:
+                 cited: bool, chunk_context: Optional[str] = None) -> List[dict]:
     """Build the chat messages for one clause. Kept deterministic (no dates,
-    no randomness) so runs are reproducible at temperature 0."""
+    no randomness) so runs are reproducible at temperature 0.
+
+    chunk_context (ablation): the parent chunk's full text, shown to the model
+    for disambiguation only - extraction and citations must still come from
+    the clause text itself."""
     field_lines = []
     for name, values in ENUM_FIELDS.items():
         field_lines.append(f'- "{name}": one of {values}, or null')
@@ -104,10 +108,13 @@ def build_prompt(clause_text: str, carrier: Optional[str], document_type: str,
             "to the exact verbatim quote from the clause text that states that value. "
             "A field without a supporting quote must be null."
         )
-    user = (
-        f"Document type: {document_type}. Carrier: {carrier or 'unknown'}.\n"
-        f"CLAUSE TEXT:\n{clause_text}"
-    )
+    user = f"Document type: {document_type}. Carrier: {carrier or 'unknown'}.\n"
+    if chunk_context:
+        user += (
+            "SURROUNDING CONTEXT (for understanding only - do NOT extract "
+            f"values that appear only here):\n{chunk_context}\n\n"
+        )
+    user += f"CLAUSE TEXT (extract from THIS text only):\n{clause_text}"
     return [{"role": "system", "content": system},
             {"role": "user", "content": user}]
 
@@ -198,14 +205,22 @@ def _norm(s: str) -> str:
     return re.sub(r"\s+", " ", s).strip().lower()
 
 
+def _strip_digit_commas(s: str) -> str:
+    """Remove thousands separators between digits so 1500.0 grounds against
+    "THB 1,500" (conservative-direction fix from review follow-up)."""
+    return re.sub(r"(?<=\d),(?=\d)", "", s)
+
+
 def _value_in_text(value, text_norm: str) -> bool:
     """Does the asserted value literally occur in (normalized) text?
-    Floats match integer-collapsed and %g renderings (1500.0 -> "1500")."""
+    Floats match integer-collapsed and %g renderings (1500.0 -> "1500"),
+    with digit-group commas in the text ignored."""
     if isinstance(value, float):
+        haystack = _strip_digit_commas(text_norm)
         candidates = {f"{value}", f"{value:g}"}
         if value == int(value):
             candidates.add(str(int(value)))
-        return any(c in text_norm for c in candidates)
+        return any(c in haystack for c in candidates)
     if isinstance(value, str):
         return _norm(value) in text_norm
     return False
@@ -309,6 +324,7 @@ def extract_records(
     chat: Optional[Callable[[List[dict], str], str]] = None,
     max_records: Optional[int] = None,
     progress_every: int = 5,
+    chunk_map: Optional[Dict[str, str]] = None,
 ) -> dict:
     """Run LLM extraction over clause rows, appending JSONL to output_path.
     Resumable: rows whose record_id already exists in the output are skipped.
@@ -337,8 +353,14 @@ def extract_records(
             if not clause_text.strip():
                 stats["parse_failures"] += 1
                 continue
+            context = None
+            if chunk_map is not None:
+                context = chunk_map.get(str(row.get("chunk_id")))
+                if context == clause_text:
+                    context = None  # chunk-granularity: context adds nothing
             messages = build_prompt(clause_text, row.get("carrier"),
-                                    str(row.get("document_type")), cited)
+                                    str(row.get("document_type")), cited,
+                                    chunk_context=context)
             try:
                 reply = chat(messages, model)
             except (urllib.error.URLError, OSError, TimeoutError,
@@ -367,6 +389,9 @@ def extract_records(
                 # extraction provenance
                 "extractor": f"{mode}:{model}",
                 "extraction_mode": mode,
+                "with_chunk_context": bool(context),
+                # pre-coercion model output, kept for coercion-loss auditing
+                "model_raw_fields": raw,
             }
             if cited:
                 record["grounding"] = verify_citations(
@@ -396,9 +421,18 @@ def main():
                         help="Restrict to record_ids present in the gold labeling DB")
     parser.add_argument("--gold-db", default=str(_repo_root() / "data" / "labeling.db"))
     parser.add_argument("--max-records", type=int, default=None)
+    parser.add_argument("--with-chunk-context", action="store_true",
+                        help="Ablation: include the parent chunk text in the "
+                             "prompt for disambiguation")
+    parser.add_argument("--chunks", default=str(_repo_root() / "data" / "chunks.jsonl"),
+                        help="Chunks file for --with-chunk-context lookup")
     args = parser.parse_args()
 
     rows = _load_jsonl(Path(args.clauses))
+    chunk_map = None
+    if args.with_chunk_context:
+        chunk_map = {str(c.get("chunk_id")): c.get("text") or ""
+                     for c in _load_jsonl(Path(args.chunks))}
     if args.only_gold:
         ids = gold_record_ids(Path(args.gold_db))
         if not ids:
@@ -409,9 +443,11 @@ def main():
 
     stats = extract_records(rows, mode=args.mode, model=args.model,
                             output_path=Path(args.output),
-                            max_records=args.max_records)
+                            max_records=args.max_records,
+                            chunk_map=chunk_map)
     stats.update({"status": "ok", "mode": args.mode, "model": args.model,
-                  "output": args.output})
+                  "output": args.output,
+                  "with_chunk_context": bool(chunk_map)})
     print(json.dumps(stats, indent=2))
 
 

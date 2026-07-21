@@ -188,3 +188,13 @@ def test_f1_is_zero_not_none_when_all_predictions_wrong():
     assert prf["recall"] == 0.0
     assert prf["f1"] == 0.0
     assert res["micro_f1"] == 0.0
+
+
+def test_value_grounding_ignores_digit_commas():
+    from evals.extraction_eval import value_grounding_check
+
+    pred = {"r1": {"record_id": "r1",
+                   "clause_text": "Change fee THB 1,500 per passenger.",
+                   "penalty_amount": 1500.0}}
+    res = value_grounding_check(pred)
+    assert res["ungrounded_values"] == 0

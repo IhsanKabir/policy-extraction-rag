@@ -140,13 +140,18 @@ VALUE_GROUNDABLE_FIELDS = [
 ]
 
 
+import re as _re
+
+
 def _value_occurs_in_text(value, text_lower: str) -> bool:
     if isinstance(value, float):
-        # 25.0 should match "25" or "25.0"; 12.5 should match "12.5"
+        # 25.0 should match "25" or "25.0"; 12.5 should match "12.5".
+        # Digit-group commas in the text are ignored ("1,500" grounds 1500.0).
+        haystack = _re.sub(r"(?<=\d),(?=\d)", "", text_lower)
         candidates = {f"{value}", f"{value:g}"}
         if value == int(value):
             candidates.add(str(int(value)))
-        return any(c in text_lower for c in candidates)
+        return any(c in haystack for c in candidates)
     if isinstance(value, str):
         return value.strip().lower() in text_lower
     return False

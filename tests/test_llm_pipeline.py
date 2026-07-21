@@ -253,3 +253,80 @@ def test_extract_records_none_record_id_not_marked_done(tmp_path):
     stats = extract_records(rows, mode="llm", model="fake", output_path=out_path,
                             chat=fake_chat)
     assert stats["extracted"] == 1  # processed, not silently skipped
+
+
+# --- pre-v1 follow-up features --------------------------------------------
+
+
+def test_value_in_text_ignores_digit_commas():
+    """Follow-up: 1500.0 must ground against "THB 1,500"."""
+    from extractors.llm_pipeline import _norm, _value_in_text
+
+    assert _value_in_text(1500.0, _norm("Change fee THB 1,500 per passenger"))
+    assert _value_in_text(1234.56, _norm("fee of 1,234.56 applies"))
+    # a comma that is not a digit separator must not be collapsed
+    assert not _value_in_text(12.0, _norm("one, two, three"))
+
+
+def test_verify_citations_grounds_comma_separated_number():
+    clause = "Cancellation fee THB 1,500 applies."
+    fields = {"penalty_amount": 1500.0}
+    citations = {"penalty_amount": "THB 1,500"}
+    report = verify_citations(fields, citations, clause)
+    assert report["grounded"] == 1
+    assert fields["penalty_amount"] == 1500.0
+
+
+def test_extract_records_stores_raw_model_fields(tmp_path):
+    rows = [{"record_id": "r1", "document_type": "fare_rule",
+             "clause_text": "Refund not permitted."}]
+
+    def fake_chat(messages, model):
+        return json.dumps({"policy_topic": "Refund_Policy",  # invalid enum
+                           "action": "not_allowed"})
+
+    out_path = tmp_path / "pred.jsonl"
+    extract_records(rows, mode="llm", model="fake", output_path=out_path,
+                    chat=fake_chat)
+    rec = json.loads(out_path.read_text(encoding="utf-8").splitlines()[0])
+    # coerced field nulled, but the raw model output is preserved for audit
+    assert rec["policy_topic"] is None
+    assert rec["model_raw_fields"]["policy_topic"] == "Refund_Policy"
+
+
+def test_chunk_context_included_in_prompt_and_flagged(tmp_path):
+    rows = [{"record_id": "r1", "document_type": "fare_rule", "chunk_id": "c9",
+             "clause_text": "Only applicable to unused tickets."}]
+    chunk_map = {"c9": "Refund policy section. Only applicable to unused "
+                       "tickets. Fees per fare family apply."}
+    seen = {}
+
+    def fake_chat(messages, model):
+        seen["user"] = messages[1]["content"]
+        return json.dumps({"policy_topic": "refund"})
+
+    out_path = tmp_path / "pred.jsonl"
+    extract_records(rows, mode="llm", model="fake", output_path=out_path,
+                    chat=fake_chat, chunk_map=chunk_map)
+    assert "SURROUNDING CONTEXT" in seen["user"]
+    assert "Refund policy section" in seen["user"]
+    rec = json.loads(out_path.read_text(encoding="utf-8").splitlines()[0])
+    assert rec["with_chunk_context"] is True
+
+
+def test_chunk_context_omitted_when_identical_to_clause(tmp_path):
+    rows = [{"record_id": "r1", "document_type": "fare_rule", "chunk_id": "c9",
+             "clause_text": "Whole chunk text."}]
+    chunk_map = {"c9": "Whole chunk text."}
+    seen = {}
+
+    def fake_chat(messages, model):
+        seen["user"] = messages[1]["content"]
+        return json.dumps({"policy_topic": "other"})
+
+    out_path = tmp_path / "pred.jsonl"
+    extract_records(rows, mode="llm", model="fake", output_path=out_path,
+                    chat=fake_chat, chunk_map=chunk_map)
+    assert "SURROUNDING CONTEXT" not in seen["user"]
+    rec = json.loads(out_path.read_text(encoding="utf-8").splitlines()[0])
+    assert rec["with_chunk_context"] is False
