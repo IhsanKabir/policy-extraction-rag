@@ -97,10 +97,19 @@ def run(args, client_factory=None) -> dict:
     if args.with_chunk_context:
         chunk_map = {str(c.get("chunk_id")): c.get("text") or "" for c in _load_jsonl(Path(args.chunks))}
 
+    state = None
     if state_path.exists():
         state = json.loads(state_path.read_text(encoding="utf-8"))
-        print(f"Resuming batch {state['batch_id']} from {state_path}", file=sys.stderr)
-    else:
+        if state.get("collected_at"):
+            # finished batch: archive its state and submit whatever is still missing
+            archived = state_path.with_name(f"{state_path.name}.{state['batch_id']}.done")
+            state_path.rename(archived)
+            print(f"Previous batch {state['batch_id']} already collected; archived state to {archived.name}",
+                  file=sys.stderr)
+            state = None
+        else:
+            print(f"Resuming batch {state['batch_id']} from {state_path}", file=sys.stderr)
+    if state is None:
         done = {r.get("record_id") for r in _load_jsonl(out_path)}
         todo = [r for r in rows if r.get("record_id") not in done]
         if args.max_records is not None:
@@ -141,13 +150,14 @@ def run(args, client_factory=None) -> dict:
         time.sleep(args.poll_seconds)
 
     rows_by_id = {r["record_id"]: r for r in rows}
+    already_written = {r.get("record_id") for r in _load_jsonl(out_path)}
     stats = {"succeeded": 0, "parse_failures": 0, "refusals": 0, "truncated": 0, "errored": 0,
              "input_tokens": 0, "output_tokens": 0}
     with open(out_path, "a", encoding="utf-8") as out:
         for res in client.messages.batches.results(state["batch_id"]):
             rid = state["id_map"].get(res.custom_id)
             row = rows_by_id.get(rid)
-            if row is None:
+            if row is None or rid in already_written:
                 continue
             if res.result.type != "succeeded":
                 stats["errored"] += 1

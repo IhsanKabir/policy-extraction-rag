@@ -76,3 +76,17 @@ def test_submit_collect_maps_ids_and_counts_refusals(tmp_path):
     # state file allows resume without resubmitting
     state = json.loads((tmp_path / "out.jsonl.batch.json").read_text(encoding="utf-8"))
     assert state["batch_id"] == "batch_test" and state["result_stats"]["succeeded"] == 1
+
+
+def test_second_run_after_collection_submits_only_missing_records(tmp_path):
+    replies = {"r00000": ('{"policy_topic": "refund", "action": "not_allowed"}', "end_turn")}
+    client = FakeClient(replies)
+    first = claude_batch.run(_args(tmp_path, max_records=1), client_factory=lambda: client)
+    assert first["succeeded"] == 1
+    client2 = FakeClient({"r00000": ('{"policy_topic": "refund", "action": "not_allowed"}', "end_turn")})
+    second = claude_batch.run(_args(tmp_path), client_factory=lambda: client2)
+    sent = client2.messages.batches.created
+    assert len(sent) == 1  # only the record not yet extracted
+    out = [json.loads(l)["record_id"] for l in open(tmp_path / "out.jsonl", encoding="utf-8")]
+    assert sorted(out) == ["abc:0", "abc:1"] and len(out) == 2
+    assert any(p.name.endswith(".done") for p in tmp_path.iterdir())
