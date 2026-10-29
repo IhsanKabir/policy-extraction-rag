@@ -48,10 +48,10 @@ def _custom_id(i: int) -> str:
 
 
 def build_params(row: dict, mode: str, model: str, effort: str,
-                 context: Optional[str]) -> dict:
+                 context: Optional[str], guidelines: Optional[str] = None) -> dict:
     clause_text = row.get("clause_text") or row.get("chunk_text") or ""
     messages = build_prompt(clause_text, row.get("carrier"), str(row.get("document_type")),
-                            mode == "llm_cited", chunk_context=context)
+                            mode == "llm_cited", chunk_context=context, guidelines=guidelines)
     system = messages[0]["content"]
     user = messages[1]["content"]
     return {
@@ -98,6 +98,7 @@ def run(args, client_factory=None) -> dict:
         chunk_map = {str(c.get("chunk_id")): c.get("text") or "" for c in _load_jsonl(Path(args.chunks))}
 
     state = None
+    guidelines = Path(args.guidelines).read_text(encoding="utf-8") if getattr(args, "guidelines", None) else None
     if state_path.exists():
         state = json.loads(state_path.read_text(encoding="utf-8"))
         if state.get("collected_at"):
@@ -126,7 +127,7 @@ def run(args, client_factory=None) -> dict:
             cid = _custom_id(i)
             id_map[cid] = row["record_id"]
             contexts[cid] = ctx
-            params_list.append(build_params(row, args.mode, args.model, args.effort, ctx))
+            params_list.append(build_params(row, args.mode, args.model, args.effort, ctx, guidelines))
         est = estimate_cost(client, params_list, args.model)
         print(json.dumps({"estimate": est, "max_cost_usd": args.max_cost}, indent=2), file=sys.stderr)
         if est["estimated_usd_upper"] > args.max_cost:
@@ -136,7 +137,8 @@ def run(args, client_factory=None) -> dict:
         batch = client.messages.batches.create(
             requests=[{"custom_id": cid, "params": p} for cid, p in zip(id_map, params_list)])
         state = {"batch_id": batch.id, "model": args.model, "mode": args.mode, "effort": args.effort,
-                 "with_chunk_context": bool(chunk_map), "id_map": id_map, "contexts": contexts,
+                 "with_chunk_context": bool(chunk_map), "guidelines": getattr(args, "guidelines", None),
+                 "id_map": id_map, "contexts": contexts,
                  "submitted_at": time.strftime("%Y-%m-%dT%H:%M:%S"), "estimate": est}
         state_path.write_text(json.dumps(state, indent=2), encoding="utf-8")
         print(f"Submitted batch {batch.id} ({len(id_map)} requests)", file=sys.stderr)
@@ -197,6 +199,7 @@ def main() -> int:
     ap.add_argument("--effort", choices=["low", "medium", "high", "xhigh", "max"], default="low")
     ap.add_argument("--with-chunk-context", action="store_true")
     ap.add_argument("--chunks", default="data/chunks.jsonl")
+    ap.add_argument("--guidelines", default=None, help="optional annotation-conventions text file appended to the prompt")
     ap.add_argument("--max-records", type=int, default=None)
     ap.add_argument("--max-cost", type=float, default=3.5, help="refuse to submit above this estimated USD")
     ap.add_argument("--poll-seconds", type=int, default=60)

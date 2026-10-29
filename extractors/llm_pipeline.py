@@ -69,7 +69,8 @@ def _repo_root() -> Path:
 
 
 def build_prompt(clause_text: str, carrier: Optional[str], document_type: str,
-                 cited: bool, chunk_context: Optional[str] = None) -> List[dict]:
+                 cited: bool, chunk_context: Optional[str] = None,
+                 guidelines: Optional[str] = None) -> List[dict]:
     """Build the chat messages for one clause. Kept deterministic (no dates,
     no randomness) so runs are reproducible at temperature 0.
 
@@ -108,6 +109,9 @@ def build_prompt(clause_text: str, carrier: Optional[str], document_type: str,
             "to the exact verbatim quote from the clause text that states that value. "
             "A field without a supporting quote must be null."
         )
+    if guidelines:
+        # optional condition: the annotation guide's conventions, appended verbatim
+        system += "\n\n" + guidelines.strip()
     user = f"Document type: {document_type}. Carrier: {carrier or 'unknown'}.\n"
     if chunk_context:
         user += (
@@ -357,6 +361,7 @@ def extract_records(
     max_records: Optional[int] = None,
     progress_every: int = 5,
     chunk_map: Optional[Dict[str, str]] = None,
+    guidelines: Optional[str] = None,
 ) -> dict:
     """Run LLM extraction over clause rows, appending JSONL to output_path.
     Resumable: rows whose record_id already exists in the output are skipped.
@@ -392,7 +397,7 @@ def extract_records(
                     context = None  # chunk-granularity: context adds nothing
             messages = build_prompt(clause_text, row.get("carrier"),
                                     str(row.get("document_type")), cited,
-                                    chunk_context=context)
+                                    chunk_context=context, guidelines=guidelines)
             try:
                 reply = chat(messages, model)
             except (urllib.error.URLError, OSError, TimeoutError,
@@ -436,6 +441,8 @@ def main():
                              "prompt for disambiguation")
     parser.add_argument("--chunks", default=str(_repo_root() / "data" / "chunks.jsonl"),
                         help="Chunks file for --with-chunk-context lookup")
+    parser.add_argument("--guidelines", default=None,
+                        help="Optional text file of annotation conventions appended to the prompt")
     args = parser.parse_args()
 
     rows = _load_jsonl(Path(args.clauses))
@@ -454,7 +461,8 @@ def main():
     stats = extract_records(rows, mode=args.mode, model=args.model,
                             output_path=Path(args.output),
                             max_records=args.max_records,
-                            chunk_map=chunk_map)
+                            chunk_map=chunk_map,
+                            guidelines=Path(args.guidelines).read_text(encoding="utf-8") if args.guidelines else None)
     stats.update({"status": "ok", "mode": args.mode, "model": args.model,
                   "output": args.output,
                   "with_chunk_context": bool(chunk_map)})

@@ -330,3 +330,15 @@ def test_chunk_context_omitted_when_identical_to_clause(tmp_path):
     assert "SURROUNDING CONTEXT" not in seen["user"]
     rec = json.loads(out_path.read_text(encoding="utf-8").splitlines()[0])
     assert rec["with_chunk_context"] is False
+
+
+def test_guidelines_condition_appends_only_when_given():
+    from extractors.llm_pipeline import build_prompt
+    base = build_prompt("Refund/Cancellation: Not Available", "VZ", "fare_rule", True)
+    same = build_prompt("Refund/Cancellation: Not Available", "VZ", "fare_rule", True, guidelines=None)
+    guided = build_prompt("Refund/Cancellation: Not Available", "VZ", "fare_rule", True,
+                          guidelines="Labelling conventions: X")
+    assert base == same  # earlier runs stay byte-identical
+    assert guided[0]["content"].startswith(base[0]["content"])
+    assert guided[0]["content"].endswith("Labelling conventions: X")
+    assert guided[1] == base[1]
