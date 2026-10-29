@@ -2,6 +2,29 @@
 
 Use this worksheet during a manual labeling session in the labeling UI (`/labeling`).
 
+## v1b rules (2026-10-28): these override anything below
+
+The v1b round uses `data/real_pilot_manual_labeling_queue_v1b.jsonl` (208 records: the 62 already-labelled v1 records first, then 146 new ones from the expanded corpus) against `data/labeling_fine.db`. The queue is built by `scripts/build_queue_v1b.py`; the selection counts are in `data/queue_v1b_selection_report.json`.
+
+1. **Label the CLAUSE only.** The full chunk is context for understanding. Never copy a value (amount, %, time window, condition) that isn't written in the clause itself.
+2. **Blind labelling.** The form starts blank and heuristic hints are hidden (`BLIND_LABELING = true` in `web/labeling.html`). Don't press "Load heuristic defaults" and don't open the heuristic panel. **Convention 4 below is withdrawn.**
+3. **Skip, don't label, junk and fragments:** menus, cookie or legal boilerplate, or a cut-off fragment that states no rule (e.g. "You can also cancel your booking up to"). Use **Skip**.
+4. **Same clause text → same label,** every time.
+5. **Eligibility holds a real condition** ("airline reschedules by more than 4 hours"), or stays empty. Don't repeat the clause or write "if any".
+6. **Time windows in one format:** `6 hours`, `24 hours`, `7 days`, `31 days`. Ranges as `8-30 days` or `24 hours-7 days`. For "above / more than" or "less than", put the number in the window and the direction in the tier's notes. When a rule varies by time band, use **Penalty Tiers** rows and leave the top-level penalty and time fields empty.
+7. **"Charge fee of change and difference in fare"** → penalty_type `mixed`, fare difference = true.
+8. **Off-topic policy text** (meals, seats, loyalty points, documents, liability) → topic `other`, and an action only if the clause states one.
+9. **Refund-percentage tables:** Penalty % always holds the share the passenger **loses**, not what they get back. Refund 100% → penalty 0, 75% → 25, 50% → 50. Write the original wording in the tier's notes (e.g. "refund 75%"). One tier row per time band. Leave a band's % empty if the clause doesn't state it.
+10. **Price of an add-on** (e.g. "Nok Refund 200 THB") is not a penalty. Put it in notes.
+11. **Penalty type by wording:** "Free of charge, charge difference in fare" or just "charge difference in fare" → `fare_difference_only`. Change fee **and** fare difference → `mixed`. Nothing charged at all → `free`. Don't set a penalty type the clause doesn't support.
+
+Start the v1b round (Command Prompt):
+```
+set LABELING_QUEUE_PATH=data/real_pilot_manual_labeling_queue_v1b.jsonl
+set LABELING_DB_PATH=data/labeling_fine.db
+uvicorn api.main:app
+```
+
 ## Labeling Conventions (decided 2026-06-08, read first)
 
 These keep the gold set consistent, which is what makes the heuristic-vs-gold comparison trustworthy.

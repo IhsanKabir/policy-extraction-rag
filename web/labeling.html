@@ -172,6 +172,8 @@
     .grid.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .field label { display: block; font-size: 11.5px; color: var(--muted); margin-bottom: 4px; font-weight: 500; }
     .field input, .field select, .field textarea { width: 100%; }
+    .field input:disabled, .field select:disabled { opacity: 0.35; cursor: not-allowed; }
+    .field.locked label { opacity: 0.5; }
     .field textarea { min-height: 64px; resize: vertical; font-size: 13px; }
     .field.wide { grid-column: 1 / -1; }
     /* divergence: field value differs from heuristic */
@@ -645,12 +647,137 @@
 
     function setField(id, value) { const n = el(id); if (n) n.value = value == null ? "" : String(value); }
 
+
+    // ---- v1b guardrails: switch fields on/off so the correct input is the easy one ----
+    // GUARDRAIL_FUNCS_START
+    const TIME_UNIT = "(?:hours?|days?|weeks?|months?|years?)";
+    const TIME_WINDOW_RE = new RegExp(`^\\d+(?:\\.\\d+)?(?:-\\d+(?:\\.\\d+)?)? ${TIME_UNIT}(?:-\\d+(?:\\.\\d+)? ${TIME_UNIT})?$`);
+    const AMOUNT_TYPES = new Set(["fixed_amount", "mixed", "unknown"]);
+    const PERCENT_TYPES = new Set(["percentage", "mixed", "unknown"]);
+
+    function normalizeTimeWindow(raw) {
+      let s = String(raw || "").toLowerCase().trim();
+      if (!s) return { value: "", direction: "" };
+      let direction = "";
+      const m = s.match(/^(within|less than|more than|above|over|under|at least|up to)\s+/);
+      if (m) { direction = m[1]; s = s.slice(m[0].length); }
+      s = s.replace(/\s+(before|prior to|after)\s+(the\s+)?(scheduled\s+)?(flight\s+)?departure.*$/, "");
+      s = s.replace(/\bhrs?\b\.?/g, "hours").replace(/\bhour\b/g, "hours").replace(/\bday\b/g, "days");
+      s = s.replace(/\b0+(\d)/g, "$1");
+      s = s.replace(/\s*[-–—]\s*/g, "-").replace(/\s+to\s+/g, "-");
+      s = s.replace(/(\d)\s*(hours|days|weeks|months|years)/g, "$1 $2");
+      s = s.replace(/(^|-)1 (hour|day|week|month|year)s\b/g, "$11 $2");
+      s = s.replace(/\.+$/, "").replace(/\s+/g, " ").trim();
+      return { value: s, direction };
+    }
+
+    function clauseNumbers(text) {
+      const t = String(text || "").replace(/(\d),(\d)/g, "$1$2");
+      return new Set((t.match(/\d+(?:\.\d+)?/g) || []).map((x) => String(Number(x))));
+    }
+    // GUARDRAIL_FUNCS_END
+
+    function setEnabled(node, on, hint) {
+      if (!node) return;
+      node.disabled = !on;
+      if (!on && node.value !== "") node.value = "";
+      node.title = on ? "" : hint;
+      const wrap = node.closest(".field");
+      if (wrap) wrap.classList.toggle("locked", !on);
+    }
+
+    function applyFieldRules() {
+      const tiersActive = collectPenaltyTiers().length > 0;
+      const t = el("penalty_type").value;
+      const tierHint = "Locked: this record uses Penalty Tiers. Put each band's values in its tier row.";
+      const typeHint = (kind) => t ? `Locked: penalty type "${t}" has no ${kind}.` : "Choose a Penalty Type first.";
+      setEnabled(el("time_window"), !tiersActive, tierHint);
+      setEnabled(el("penalty_amount"), !tiersActive && AMOUNT_TYPES.has(t), tiersActive ? tierHint : typeHint("amount"));
+      setEnabled(el("penalty_currency"), !tiersActive && AMOUNT_TYPES.has(t), tiersActive ? tierHint : typeHint("amount"));
+      setEnabled(el("penalty_percent"), !tiersActive && PERCENT_TYPES.has(t), tiersActive ? tierHint : typeHint("percentage"));
+      if ((t === "fare_difference_only" || t === "mixed") && el("fare_difference_required").value === "") {
+        el("fare_difference_required").value = "true";
+      }
+      el("penaltyTierRows").querySelectorAll(".repeat-row").forEach((row) => {
+        const tt = row.querySelector(".tier_penalty_type").value;
+        const hint = tt ? `Locked: penalty type "${tt}" doesn't use this field.` : "Choose this tier's Penalty Type first.";
+        setEnabled(row.querySelector(".tier_penalty_amount"), AMOUNT_TYPES.has(tt), hint);
+        setEnabled(row.querySelector(".tier_penalty_currency"), AMOUNT_TYPES.has(tt), hint);
+        setEnabled(row.querySelector(".tier_penalty_percent"), PERCENT_TYPES.has(tt), hint);
+        const fd = row.querySelector(".tier_fare_diff");
+        if ((tt === "fare_difference_only" || tt === "mixed") && fd.value === "") fd.value = "true";
+      });
+    }
+
+    function normalizeInputOnChange(e) {
+      const n = e.target;
+      if (!n || !n.matches) return;
+      if (n.matches("#time_window, .tier_time_window, .opt_time_window")) {
+        const { value, direction } = normalizeTimeWindow(n.value);
+        n.value = value;
+        if (direction && value) {
+          const row = n.closest(".repeat-row");
+          const notes = row ? (row.querySelector(".tier_notes") || row.querySelector(".opt_notes")) : el("notes");
+          const phrase = `${direction} ${value}`;
+          if (notes && !notes.value.toLowerCase().includes(phrase)) notes.value = notes.value ? `${phrase}; ${notes.value}` : phrase;
+        }
+      } else if (n.matches("#penalty_currency, .tier_penalty_currency, .opt_fee_currency")) {
+        n.value = n.value.trim().toUpperCase();
+      }
+    }
+
+    function validateBeforeSave(row) {
+      const w = [];
+      const clause = String(row.clause_text || "");
+      const low = clause.toLowerCase();
+      const nums = clauseNumbers(clause);
+      const tiers = collectPenaltyTiers();
+      const opts = collectRefundOptions();
+      if (!el("policy_topic").value) w.push("Policy Topic is empty.");
+      if (!el("action").value) w.push("Action is empty.");
+      const windows = [["Time Window", el("time_window").value]]
+        .concat(tiers.map((r, i) => [`Tier ${i + 1} time window`, r.time_window || ""]))
+        .concat(opts.map((r, i) => [`Refund option ${i + 1} time window`, r.time_window || ""]));
+      windows.forEach(([label, v]) => {
+        if (!v) return;
+        if (!TIME_WINDOW_RE.test(v)) w.push(`${label} "${v}" isn't in the standard format (e.g. 24 hours, 8-30 days, 24 hours-7 days).`);
+        (v.match(/\d+(?:\.\d+)?/g) || []).forEach((x) => { if (!nums.has(String(Number(x)))) w.push(`${label}: ${x} doesn't appear in the clause.`); });
+      });
+      const amounts = [["Penalty Amount", el("penalty_amount").value === "" ? null : Number(el("penalty_amount").value)]]
+        .concat(tiers.map((r, i) => [`Tier ${i + 1} amount`, r.penalty_amount]))
+        .concat(opts.map((r, i) => [`Refund option ${i + 1} fee amount`, r.fee_amount]));
+      amounts.forEach(([label, v]) => { if (v != null && !nums.has(String(Number(v)))) w.push(`${label} ${v} doesn't appear in the clause.`); });
+      const percents = [["Penalty %", el("penalty_percent").value === "" ? null : Number(el("penalty_percent").value)]]
+        .concat(tiers.map((r, i) => [`Tier ${i + 1} %`, r.penalty_percent]))
+        .concat(opts.map((r, i) => [`Refund option ${i + 1} fee %`, r.fee_percent]));
+      percents.forEach(([label, v]) => {
+        if (v == null) return;
+        if (v < 0 || v > 100) w.push(`${label} ${v} is outside 0-100.`);
+        else if (!nums.has(String(v)) && !nums.has(String(100 - v))) w.push(`${label} ${v}: neither ${v}% nor ${100 - v}% appears in the clause.`);
+      });
+      [["Penalty Currency", el("penalty_currency").value]].concat(tiers.map((r, i) => [`Tier ${i + 1} currency`, r.penalty_currency || ""]))
+        .forEach(([label, v]) => { if (v && !/^[A-Z]{3}$/.test(v)) w.push(`${label} "${v}" should be a 3-letter code like THB or USD.`); });
+      const elig = splitLines(el("eligibility_conditions").value);
+      const exc = splitLines(el("exceptions").value);
+      elig.forEach((line) => {
+        const l = line.toLowerCase();
+        if (/^if any\.?$/.test(l)) w.push(`Eligibility "${line}" isn't a condition. Leave it empty.`);
+        else if (l.length >= 25 && low.includes(l.slice(0, 25))) w.push(`Eligibility "${line.slice(0, 40)}..." copies the clause. Write the condition itself, or leave it empty.`);
+      });
+      elig.forEach((line) => { if (exc.map((x) => x.toLowerCase()).includes(line.toLowerCase())) w.push(`"${line}" is in both Eligibility and Exceptions.`); });
+      if (el("penalty_type").value === "free" && el("fare_difference_required").value === "true") w.push(`Penalty type "free" with fare difference = true: use "fare_difference_only".`);
+      return w;
+    }
+
+    // v1b: true = form starts blank and heuristic hints are hidden, to avoid anchoring the gold labels.
+    const BLIND_LABELING = true;
     function fillFormFromRow(row, useManualPreferred=true) {
       if (!row) return;
       state.suspendFormEvents = true;
       const manual = useManualPreferred ? (row.manual_label || null) : null;
       const heuristic = row.heuristic || {};
-      const source = manual || heuristic || {};
+      // Blind labelling (v1b): never pre-fill from the heuristic unless explicitly asked.
+      const source = useManualPreferred ? (manual || (BLIND_LABELING ? {} : heuristic)) : heuristic;
       setField("policy_topic", source.policy_topic || "");
       setField("action", source.action || "");
       setField("penalty_type", source.penalty_type || "");
@@ -666,6 +793,7 @@
       setPenaltyTiers(source.penalty_tiers || []);
       setRefundOptions(source.refund_payout_options || []);
       setField("notes", (manual && manual.notes) || "");
+      applyFieldRules();
       state.suspendFormEvents = false;
     }
 
@@ -738,6 +866,10 @@
       return v == null ? "" : String(v);
     }
     function updateDivergence() {
+      if (BLIND_LABELING) {
+        document.querySelectorAll(".field.diverged").forEach((w) => w.classList.remove("diverged"));
+        return;
+      }
       const row = currentRow();
       const h = row ? (row.heuristic || {}) : {};
       SIMPLE_DIVERGE_FIELDS.forEach((id) => {
@@ -813,9 +945,12 @@
       // highlighted source text (innerHTML is safe: escaped first, then wrapped)
       el("clauseText").innerHTML = highlightPolicyText(row.clause_text || "");
       el("chunkText").innerHTML = highlightPolicyText(row.chunk_text || "");
-      el("heuristicJson").textContent = JSON.stringify(row.heuristic || {}, null, 2);
+      el("heuristicJson").textContent = BLIND_LABELING
+        ? "Hidden: blind labelling is on (label from the clause, not the machine guess)."
+        : JSON.stringify(row.heuristic || {}, null, 2);
       fillFormFromRow(row, true);
       const draftLoaded = applyDraftToForm(row);
+      applyFieldRules();
       el("saveInfo").textContent = draftLoaded
         ? "Loaded autosaved draft."
         : (row.manual_label ? "Loaded existing manual label." : "");
@@ -855,6 +990,11 @@
 
     async function saveCurrent() {
       const row = currentRow(); if (!row) return false;
+      const warnings = validateBeforeSave(row);
+      if (warnings.length && !window.confirm("Check before saving:\n\n\u2022 " + warnings.join("\n\u2022 ") + "\n\nPress OK to save anyway, or Cancel to fix.")) {
+        setStatus("Not saved: fix the listed issues, or save again and choose OK.", "error");
+        return false;
+      }
       const payload = getFormPayload(row);
       payload.label_status = "labeled";
       return savePayload(row, payload);
@@ -961,6 +1101,7 @@
 
     function onFormInputChange() {
       if (state.suspendFormEvents) return;
+      applyFieldRules();
       clearSaveInfoIfDirtyNoticeOnly();
       updateDirtyState();
       updateDivergence();
@@ -997,6 +1138,8 @@
       node.addEventListener("input", onFormInputChange);
       node.addEventListener("change", onFormInputChange);
     });
+
+    document.addEventListener("change", normalizeInputOnChange, true);
 
     window.addEventListener("beforeunload", (e) => { if (!state.isDirty) return; e.preventDefault(); e.returnValue = ""; });
 
