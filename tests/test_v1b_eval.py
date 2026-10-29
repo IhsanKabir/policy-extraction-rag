@@ -64,3 +64,14 @@ def test_dedup_drops_exact_contained_and_near_duplicates():
         {"record_id": "5", "clause_text": "Changes in name: Not permitted"},
     ]
     assert [r["record_id"] for r in dedup(recs)] == ["1", "3", "5"]
+
+
+def test_time_window_compares_stated_durations():
+    from evals.v1b_eval import duration_key
+    assert field_match("time_window", "365 days", "valid up to 365 days from the departure flight on your booking")[0]
+    assert field_match("time_window", "72 hours-11 months", "a minimum of 72 hours and a maximum of 11 months prior to departure")[0]
+    assert field_match("time_window", "24 hours-7 days", "24 Hrs. - 7 Days")[0]
+    assert field_match("time_window", "3 hours", "at least 3 hours before the first segment on the ticket")[0]
+    assert not field_match("time_window", "3 hours", "6 hours before departure")[0]
+    assert not field_match("time_window", "8-30 days", "30 days")[0]
+    assert duration_key("1 day") == duration_key("1 days")

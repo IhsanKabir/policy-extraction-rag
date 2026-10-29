@@ -8,7 +8,10 @@ reproducible. Differences from the v0 scorer:
     - fare_difference_required: boolean exact;
     - penalty_amount / penalty_percent: numeric (tolerance 1e-6);
     - penalty_currency: upper-cased exact;
-    - time_window: normalised ("08-30 Days" == "8-30 days", "24 Hrs." == "24 hours");
+    - time_window: compared by the durations it states, after normalisation
+      ("08-30 Days" == "8-30 days"; "valid up to 365 days from the departure
+      flight" == "365 days"), since gold uses "N unit" while models are asked
+      to copy the phrase verbatim;
     - tax_refund_rule, eligibility_conditions, exceptions (free text): token F1
       between gold and prediction; counted correct when F1 >= TEXT_MATCH_F1,
       and the mean F1 is reported as a soft score.
@@ -79,6 +82,21 @@ def normalize_time_window(raw) -> Optional[str]:
     return s or None
 
 
+_DURATION = re.compile(r"(\d+(?:\.\d+)?)(?:-(\d+(?:\.\d+)?))? ?(hour|day|week|month|year)s?\b")
+
+
+def duration_key(raw) -> Optional[tuple]:
+    """The durations a time-window value states, as ((low, high, unit), ...),
+    so "valid up to 365 days from the departure flight" == "365 days" and
+    "a minimum of 72 hours and a maximum of 11 months" == "72 hours-11 months".
+    Falls back to the normalised string when no duration is present."""
+    norm = normalize_time_window(raw)
+    if norm is None:
+        return None
+    found = tuple((float(lo), float(hi) if hi else float(lo), unit) for lo, hi, unit in _DURATION.findall(norm))
+    return found or (norm,)
+
+
 def tokens(value) -> List[str]:
     if value is None:
         return []
@@ -130,7 +148,7 @@ def field_match(field: str, gold, pred) -> Tuple[bool, float]:
         ok = str(gold).strip().upper() == str(pred).strip().upper()
         return ok, float(ok)
     if field in TIME:
-        ok = normalize_time_window(gold) == normalize_time_window(pred)
+        ok = duration_key(gold) == duration_key(pred)
         return ok, float(ok)
     f1 = token_f1(gold, pred)
     return f1 >= TEXT_MATCH_F1, f1
