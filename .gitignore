@@ -51,3 +51,6 @@ logs/
 # Server logs / editor backups
 *.out
 *.bak
+
+# hand-off files containing source text (IAA workbook)
+handoff/
