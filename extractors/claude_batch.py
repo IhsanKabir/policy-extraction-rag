@@ -190,6 +190,51 @@ def run(args, client_factory=None) -> dict:
     return {"status": "ok", "batch_id": state["batch_id"], "output": str(out_path), **stats}
 
 
+def recollect(args, client_factory=None) -> dict:
+    """Rebuild an output file from an already-finished batch (free: results are
+    re-downloaded, nothing is generated). Used after a parser fix. The previous
+    output is kept as <output>.pre-recollect."""
+    import anthropic
+    from dotenv import load_dotenv
+
+    load_dotenv(".env")
+    client = client_factory() if client_factory else anthropic.Anthropic()
+    out_path = Path(args.output)
+    state_path = out_path.with_suffix(out_path.suffix + ".batch.json")
+    candidates = [state_path] + sorted(out_path.parent.glob(state_path.name + ".*.done"))
+    states = [json.loads(p.read_text(encoding="utf-8")) for p in candidates if p.exists()]
+    if not states:
+        return {"status": "no_batch_state", "output": str(out_path)}
+    if out_path.exists():
+        out_path.rename(out_path.with_name(out_path.name + ".pre-recollect"))
+    rows_by_id = {r["record_id"]: r for r in _load_jsonl(Path(args.clauses))}
+    stats = {"succeeded": 0, "parse_failures": 0, "refusals": 0, "batches": len(states)}
+    written = set()
+    with open(out_path, "w", encoding="utf-8") as out:
+        for state in states:
+            for res in client.messages.batches.results(state["batch_id"]):
+                rid = state["id_map"].get(res.custom_id)
+                row = rows_by_id.get(rid)
+                if row is None or rid in written or res.result.type != "succeeded":
+                    continue
+                msg = res.result.message
+                if msg.stop_reason == "refusal":
+                    stats["refusals"] += 1
+                    continue
+                clause_text = row.get("clause_text") or row.get("chunk_text") or ""
+                record = build_output_record(row, clause_text, reply_text(msg), state["mode"], state["model"],
+                                             state["contexts"].get(res.custom_id))
+                if record is None:
+                    stats["parse_failures"] += 1
+                    continue
+                record["batch_id"] = state["batch_id"]
+                record["usage"] = {"input_tokens": msg.usage.input_tokens, "output_tokens": msg.usage.output_tokens}
+                out.write(json.dumps(record, ensure_ascii=False) + "\n")
+                written.add(rid)
+                stats["succeeded"] += 1
+    return {"status": "recollected", "output": str(out_path), **stats}
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--clauses", required=True)
@@ -204,8 +249,10 @@ def main() -> int:
     ap.add_argument("--max-cost", type=float, default=3.5, help="refuse to submit above this estimated USD")
     ap.add_argument("--poll-seconds", type=int, default=60)
     ap.add_argument("--yes", action="store_true", help="actually submit the batch (otherwise estimate only)")
+    ap.add_argument("--recollect", action="store_true",
+                    help="rebuild the output from finished batch(es) without generating anything (free)")
     args = ap.parse_args()
-    print(json.dumps(run(args), indent=2))
+    print(json.dumps(recollect(args) if args.recollect else run(args), indent=2))
     return 0
 
 

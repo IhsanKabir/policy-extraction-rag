@@ -165,7 +165,23 @@ def parse_model_json(text: str) -> Optional[dict]:
                 out = json.loads(t[start:end + 1])
                 return out if isinstance(out, dict) else None
             except json.JSONDecodeError:
-                return None
+                pass
+        # Several JSON objects with prose between them (a model that answers,
+        # then writes "Correction: ..." and answers again): take the LAST
+        # complete object, i.e. the model's final answer.
+        decoder = json.JSONDecoder()
+        last = None
+        i = t.find("{")
+        while i != -1:
+            try:
+                obj, length = decoder.raw_decode(t, i)
+            except json.JSONDecodeError:
+                i = t.find("{", i + 1)
+                continue
+            if isinstance(obj, dict):
+                last = obj
+            i = t.find("{", i + length)
+        return last
     return None
 
 

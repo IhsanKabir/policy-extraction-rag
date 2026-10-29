@@ -342,3 +342,14 @@ def test_guidelines_condition_appends_only_when_given():
     assert guided[0]["content"].startswith(base[0]["content"])
     assert guided[0]["content"].endswith("Labelling conventions: X")
     assert guided[1] == base[1]
+
+
+def test_parse_takes_final_object_after_self_correction():
+    from extractors.llm_pipeline import parse_model_json
+    reply = ('{"policy_topic": "reissue_change", "action": "allowed"}\n\n'
+             'Correction: a field without a supporting quote must be null.\n\n'
+             '{"policy_topic": "reissue_change", "action": "conditional", "citations": {"action": "x"}}')
+    out = parse_model_json(reply)
+    assert out["action"] == "conditional" and out["citations"] == {"action": "x"}
+    assert parse_model_json('{"a": 1}') == {"a": 1}
+    assert parse_model_json("no json here") is None
