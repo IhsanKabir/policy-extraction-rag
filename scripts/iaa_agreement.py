@@ -22,7 +22,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from evals import v1b_eval as E  # noqa: E402
-from scripts.audit_label_provenance import METHODS  # noqa: E402
+from scripts.audit_label_provenance import METHODS, PAIRED, paired_delta  # noqa: E402
+
+# The audit's pairs, plus the best system against the rule-based baseline.
+IAA_PAIRED = PAIRED + [("Rule-based", "Opus 5.5 + cite + guide")]
 
 
 def cohen_kappa(a: list, b: list) -> float | None:
@@ -91,6 +94,10 @@ def main() -> int:
         "methods": {m: {"vs_A": E.score(on_both_a, E.load_pred(Path(p)))["micro_f1"],
                         "vs_B": E.score(on_both_b, E.load_pred(Path(p)))["micro_f1"]}
                     for m, p in METHODS.items()},
+        "paired": [{"base": b, "comp": c,
+                    "vs_A": paired_delta(on_both_a, Path(METHODS[b]), Path(METHODS[c]))["micro_f1"],
+                    "vs_B": paired_delta(on_both_b, Path(METHODS[b]), Path(METHODS[c]))["micro_f1"]}
+                   for b, c in IAA_PAIRED],
     }
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(report, indent=2), encoding="utf-8")
@@ -102,6 +109,14 @@ def main() -> int:
     print(f"{'method':26s} {'vs A':>6s} {'vs B':>6s}")
     for m, s in report["methods"].items():
         print(f"{m:26s} {100*(s['vs_A'] or 0):6.1f} {100*(s['vs_B'] or 0):6.1f}")
+    print("paired micro-F1 deltas (comp - base, 95% CI; * = CI excludes 0)")
+    for p in report["paired"]:
+        cells = []
+        for side in ("vs_A", "vs_B"):
+            d, (lo, hi) = p[side]["delta"], p[side]["ci95"]
+            star = "*" if lo > 0 or hi < 0 else " "
+            cells.append(f"{side} {100*d:+5.1f} [{100*lo:+5.1f},{100*hi:+5.1f}]{star}")
+        print(f"  {p['comp']:24s} - {p['base']:22s} " + "  ".join(cells))
     return 0
 
 
