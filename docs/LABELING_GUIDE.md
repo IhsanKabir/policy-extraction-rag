@@ -42,7 +42,7 @@ Otherwise label it, even if it's off-topic (baggage, meals, documents). Those ge
 |---|---|
 | `free` | nothing is charged at all |
 | `fare_difference_only` | "free of charge, charge difference in fare" or just "charge difference in fare" |
-| `mixed` | a change fee **and** the fare difference |
+| `mixed` | two or more kinds of charge together: a fee **and** the fare difference, or a fixed fee **and** a percentage |
 | `fixed_amount` | one fixed fee, e.g. "THB 225 per passenger" |
 | `percentage` | a percentage is lost or kept, e.g. "refund 75%" |
 | `forfeiture` | the money or residual value is lost entirely |
@@ -53,6 +53,17 @@ Otherwise label it, even if it's off-topic (baggage, meals, documents). Those ge
 - **Penalty Amount / Currency:** only when the clause gives **one** fee, e.g. `225` / `THB`. Use the currency code (THB, USD, AED, INR, MYR, QAR).
 - **Penalty Percent:** what the passenger **loses**, not what they get back. Refund 75% → `25`.
 - **`fare_difference_only` vs just Fare Difference = true:** use `fare_difference_only` only when the clause presents the fare difference as the **whole** charge (e.g. a fee-table cell: "Free of charge, charge difference in fare"). If a sentence just says the passenger pays the fare difference, and other fees may apply, leave Penalty Type **empty** and set Fare Difference to `true`.
+- **Fixed fee + percentage** (added 2026-11-01): when one rule charges a fixed fee **and** a percentage of the fare, use `mixed` and fill **both** Penalty Amount + Currency **and** Penalty Percent (the % lost, as above). Leave Fare Difference empty unless the clause mentions it. In Notes, write:
+  - what the percentage is taken from: `% of base fare` or `% of total fare`;
+  - how the two combine: `fee plus %` or `whichever is higher` / `whichever is lower`.
+
+  | Clause | Type | Amount / Currency | % | Notes |
+  |---|---|---|---|---|
+  | "Cancellation fee THB 500 plus 10% of base fare" | `mixed` | 500 / THB | 10 | `fee plus %; % of base fare` |
+  | "25% of the fare or USD 50, whichever is higher" | `mixed` | 50 / USD | 25 | `whichever is higher; % of total fare` |
+  | "Refund 75% less an admin fee of AED 100" | `mixed` | 100 / AED | 25 | `fee plus %` |
+
+  If the fee and % change by time band, use Penalty Tiers (Step 4) instead, with both values in each tier. If you can't tell whether an amount is a penalty or the price of an add-on (see example D), label only the penalty and explain in Notes.
 - **Fare Difference Required:** `true` only if the clause says fare difference applies; `false` only if it explicitly says none. Otherwise empty.
 - **Tax Refund Rule:** short phrase, only if taxes are mentioned: `taxes refundable`, `airport tax included in refund`, `taxes not refundable`.
 
@@ -80,9 +91,9 @@ Use notes for anything a reader needs: ambiguity, the price of an add-on ("Nok R
 
 ## The form helps you (guardrails, 2026-10-28)
 - **Locked (greyed) fields** can't be used in the current situation. Once any Penalty Tier has a value, the top-level Time Window, Penalty Amount, Currency and Penalty % lock. Penalty Type decides which value fields open: `percentage` → %, `fixed_amount` → amount + currency, `mixed` / `unknown` → both, everything else → none. Hover a locked field to see why.
-- **`fare_difference_only` or `mixed`** sets Fare Difference to `true` automatically.
+- **`fare_difference_only`** sets Fare Difference to `true` automatically. **`mixed`** does so only when the clause mentions a "difference"; for a fee + percentage rule it stays empty.
 - **Time windows tidy themselves** when you leave the box: `08-30 Days` → `8-30 days`, `24 Hrs. - 7 Days` → `24 hours-7 days`, `Within 24 Hours` → `24 hours` (with "within 24 hours" added to the notes). Currencies become upper case.
-- **Before saving**, a pop-up lists anything suspicious: a number not in the clause, a wrong format, an eligibility line that copies the clause, a missing topic or action. **Cancel** to fix, or **OK** to save anyway when you're sure (e.g. a percentage you calculated: refund 75% → 25 is accepted automatically).
+- **Before saving**, a pop-up lists anything suspicious: a number not in the clause, a wrong format, an eligibility line that copies the clause, a missing topic or action, Fare Difference `true` when the clause doesn't mention one, or an amount and a % filled without penalty type `mixed`. **Cancel** to fix, or **OK** to save anyway when you're sure (e.g. a percentage you calculated: refund 75% → 25 is accepted automatically).
 
 ## Worked examples
 **A. `Refund/Cancellation: Not Available`**

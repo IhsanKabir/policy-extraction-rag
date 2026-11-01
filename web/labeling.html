@@ -651,6 +651,7 @@
     // ---- v1b guardrails: switch fields on/off so the correct input is the easy one ----
     // GUARDRAIL_FUNCS_START
     const TIME_UNIT = "(?:hours?|days?|weeks?|months?|years?)";
+    const FARE_DIFF_RE = /fare\s*diff|\bdifferences?\b/i;  // in these rules "difference" means the fare difference
     const TIME_WINDOW_RE = new RegExp(`^\\d+(?:\\.\\d+)?(?:-\\d+(?:\\.\\d+)?)? ${TIME_UNIT}(?:-\\d+(?:\\.\\d+)? ${TIME_UNIT})?$`);
     const AMOUNT_TYPES = new Set(["fixed_amount", "mixed", "unknown"]);
     const PERCENT_TYPES = new Set(["percentage", "mixed", "unknown"]);
@@ -695,7 +696,10 @@
       setEnabled(el("penalty_amount"), !tiersActive && AMOUNT_TYPES.has(t), tiersActive ? tierHint : typeHint("amount"));
       setEnabled(el("penalty_currency"), !tiersActive && AMOUNT_TYPES.has(t), tiersActive ? tierHint : typeHint("amount"));
       setEnabled(el("penalty_percent"), !tiersActive && PERCENT_TYPES.has(t), tiersActive ? tierHint : typeHint("percentage"));
-      if ((t === "fare_difference_only" || t === "mixed") && el("fare_difference_required").value === "") {
+      // `mixed` also covers fee + percentage (guide, 2026-11-01), so it implies a fare difference only when the clause says so.
+      const clauseHasFareDiff = FARE_DIFF_RE.test(el("clauseText").textContent || "");
+      const impliesFareDiff = (type) => type === "fare_difference_only" || (type === "mixed" && clauseHasFareDiff);
+      if (impliesFareDiff(t) && el("fare_difference_required").value === "") {
         el("fare_difference_required").value = "true";
       }
       el("penaltyTierRows").querySelectorAll(".repeat-row").forEach((row) => {
@@ -705,7 +709,7 @@
         setEnabled(row.querySelector(".tier_penalty_currency"), AMOUNT_TYPES.has(tt), hint);
         setEnabled(row.querySelector(".tier_penalty_percent"), PERCENT_TYPES.has(tt), hint);
         const fd = row.querySelector(".tier_fare_diff");
-        if ((tt === "fare_difference_only" || tt === "mixed") && fd.value === "") fd.value = "true";
+        if (impliesFareDiff(tt) && fd.value === "") fd.value = "true";
       });
     }
 
@@ -766,6 +770,8 @@
       });
       elig.forEach((line) => { if (exc.map((x) => x.toLowerCase()).includes(line.toLowerCase())) w.push(`"${line}" is in both Eligibility and Exceptions.`); });
       if (el("penalty_type").value === "free" && el("fare_difference_required").value === "true") w.push(`Penalty type "free" with fare difference = true: use "fare_difference_only".`);
+      if (el("fare_difference_required").value === "true" && !FARE_DIFF_RE.test(clause)) w.push(`Fare difference = true, but the clause doesn't mention a fare difference. For a fee + percentage "mixed" rule, leave it empty.`);
+      if (el("penalty_amount").value !== "" && el("penalty_percent").value !== "" && el("penalty_type").value !== "mixed") w.push(`Both an amount and a % are filled: a fee + percentage rule is penalty type "mixed".`);
       return w;
     }
 
