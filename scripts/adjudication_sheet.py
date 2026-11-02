@@ -3,7 +3,8 @@
 `build` lists every disagreement between A (data/labeling_fine.db) and B
 (data/labeling_iaa_b.db) on the IAA sample as one row per (record, field), with
 both values side by side. The two annotators fill in the agreed value together
-and the guide rule that decided it. A field counts as a disagreement when the
+and the ID of the guide rule that decided it (sheet "Rules": the current
+guide split into numbered rules). A field counts as a disagreement when the
 v1b scorer would not match A's value to B's (one side empty, or no field_match).
 A skip/label difference is a "decision" row; when B labelled a record A skipped,
 B's filled fields are listed too, and are used only if the decision becomes
@@ -25,6 +26,7 @@ from __future__ import annotations
 import argparse
 import collections
 import json
+import re
 import sqlite3
 import sys
 from pathlib import Path
@@ -41,12 +43,15 @@ from scripts.iaa_workbook import CHOICES, INPUT_FILL, _lines, _number  # noqa: E
 DECISION = "decision"
 AGREED = ["A", "B", "other"]
 LIST_FIELDS = {"eligibility_conditions", "exceptions"}
-# (header, key, width); keys with None are read-only
+GAP_ID = "GAP"
+GAP_TEXT = "No rule in the guide decides this (guide gap). Explain in Notes."
+RULE_TEXT_HEADER = "Rule text (auto, click to open)"
+# (header, key, width); keys with None are read-only or formulas
 COLUMNS = [
     ("#", None, 5), ("Record ID", None, 14), ("Carrier", None, 8), ("CLAUSE", None, 55),
     ("Surrounding text", None, 55), ("Field", None, 18), ("A (gold)", None, 22), ("B (second annotator)", None, 22),
     ("Agreed: A / B / other", "agreed", 12), ("If other: value", "other_value", 20),
-    ("Guide rule or reason (required)", "reason", 36), ("Guide gap? (yes/no)", "gap", 10), ("Notes", "notes", 26),
+    ("Guide rule ID (required)", "rule_id", 12), (RULE_TEXT_HEADER, None, 45), ("Notes", "notes", 30),
 ]
 FIRST_ROW = 2
 INSTRUCTIONS = """Adjudication: annotator A and annotator B together
@@ -54,13 +59,61 @@ INSTRUCTIONS = """Adjudication: annotator A and annotator B together
 Each row is one field where your two labels differ. Decide together, using only the labelling guide.
 - Agreed: "A" keeps A's value, "B" keeps B's, "other" uses the value you type in "If other: value"
   (leave that empty to mean "the field should be empty").
-- Guide rule or reason: which guide rule decided it (e.g. "Step 1: topic = transaction", "example B").
-  If the guide doesn't decide it, say so and write "yes" in "Guide gap?".
+- Guide rule ID: pick the rule that decided it from the drop-down. The sheet "Rules" is the full current
+  guide (incl. the 2026-11-01 addendum), split into numbered rules. The next column shows the rule's text;
+  click it to jump to the rule. If several rules apply, pick the main one and name the others in Notes.
+  If no rule decides it, pick GAP and explain in Notes.
 - A "decision" row is skip vs label. If you agree on "skip", the other rows for that record are ignored.
 - Lists (eligibility, exceptions): one item per line.
-- Don't use AI tools, and don't look at any model output.
-- Columns A-H must not be edited.
+- Help from a person is fine (say who in Notes). Don't use AI tools, and don't look at any model output.
+- Columns A-H, column L and the Rules sheet must not be edited.
 """
+
+
+def parse_rules(guide_md: str) -> list[tuple[str, str, str]]:
+    """Split the labelling guide into numbered rules: (id, section, text).
+
+    A rule is a bullet, a numbered item, a table row (header rows excluded) or a
+    paragraph; indented lines continue the rule above. A lead-in line such as
+    "Action:" right before a table prefixes each of its rows instead. Each
+    worked example is one rule, including its table."""
+    rules: list[list[str]] = []
+    section, prefix, in_examples, prev_blank = "", "", False, True
+    lines = guide_md.splitlines()
+    for i, raw in enumerate(lines):
+        line = raw.strip().replace("**", "")
+        if not line:
+            prev_blank = True
+            continue
+        if line.startswith("#"):
+            section = line.lstrip("#").strip()
+            in_examples = section.lower().startswith("worked examples")
+            prev_blank = True
+            continue
+        nxt = lines[i + 1].strip() if i + 1 < len(lines) else ""
+        indented = raw.startswith((" ", "\t"))
+        is_table = line.startswith("|")
+        if is_table and (set(line) <= set("|-: ") or nxt.startswith("|-")):
+            continue  # separator or header row
+        if not is_table:
+            prefix = ""
+        if not in_examples and not indented and line.endswith(":") and nxt.startswith("|"):
+            prefix = line.rstrip(":").strip()
+            continue
+        if in_examples:
+            starts_rule = bool(re.match(r"^[A-Z]\. ", line))
+        else:
+            starts_rule = not indented and bool(re.match(r"^(- |\d+\. )", line) or is_table or prev_blank)
+        if starts_rule or not rules:
+            text = line
+            if is_table:
+                text = " : ".join(c.strip() for c in line.strip("|").split("|"))
+                text = f"{prefix} {text}" if prefix else text
+            rules.append([section, re.sub(r"^(- |\d+\. )", "", text)])
+        else:
+            rules[-1][1] += "\n" + line
+        prev_blank = False
+    return [(f"R{n}", sec, text) for n, (sec, text) in enumerate(rules, 1)] + [(GAP_ID, "", GAP_TEXT)]
 
 
 def load_db(db: Path) -> dict[str, tuple[str, dict]]:
@@ -115,9 +168,41 @@ def read_only_values(n: int, row: dict) -> list:
             row["field"], show(row["a"]), show(row["b"])]
 
 
-def build(queue_path: Path, a_db: Path, b_db: Path, out: Path) -> int:
+def _col(key_or_header: str) -> int:
+    return next(i for i, (h, k, _) in enumerate(COLUMNS, 1) if key_or_header in (h, k))
+
+
+def add_rules_sheet(wb: Workbook, rules: list[tuple[str, str, str]]) -> None:
+    ws = wb.create_sheet("Rules")
+    for c, (header, width) in enumerate((("Rule ID", 9), ("Guide section", 28), ("Rule (guide wording)", 120)), 1):
+        cell = ws.cell(row=1, column=c, value=header)
+        cell.font = Font(bold=True)
+        ws.column_dimensions[cell.column_letter].width = width
+    for r, rule in enumerate(rules, 2):
+        for c, v in enumerate(rule, 1):
+            ws.cell(row=r, column=c, value=v).alignment = Alignment(wrap_text=True, vertical="top")
+    ws.freeze_panes = "A2"
+
+
+def link_rule_columns(ws, n_rules: int, last: int) -> None:
+    """Rule-ID drop-down, plus a formula that shows the rule and links to it."""
+    id_letter = ws.cell(row=1, column=_col("rule_id")).column_letter
+    dv = DataValidation(type="list", formula1=f"=Rules!$A$2:$A${n_rules + 1}", allow_blank=True,
+                        showErrorMessage=True, errorTitle="Not a rule ID", error="Pick a rule ID from the list.")
+    ws.add_data_validation(dv)
+    dv.add(f"{id_letter}{FIRST_ROW}:{id_letter}{last}")
+    text_col = _col(RULE_TEXT_HEADER)
+    for r in range(FIRST_ROW, last + 1):
+        ref = f"{id_letter}{r}"
+        ws.cell(row=r, column=text_col, value=(
+            f'=IF({ref}="","",IFERROR(HYPERLINK("#Rules!A"&MATCH({ref},Rules!$A:$A,0),'
+            f'VLOOKUP({ref},Rules!$A:$C,3,FALSE)),""))'))
+
+
+def build(queue_path: Path, a_db: Path, b_db: Path, guide: Path, out: Path) -> int:
     queue, a, b = _sample(queue_path, a_db, b_db)
     rows = disagreements(queue, a, b)
+    rules = parse_rules(guide.read_text(encoding="utf-8"))
     wb = Workbook()
     info = wb.active
     info.title = "Instructions"
@@ -136,17 +221,17 @@ def build(queue_path: Path, a_db: Path, b_db: Path, out: Path) -> int:
         for c in range(1, len(COLUMNS) + 1):
             cell = ws.cell(row=r, column=c, value=values[c - 1] if c <= len(values) else None)
             cell.alignment = Alignment(wrap_text=True, vertical="top")
-            if c > len(values):
+            if c > len(values) and COLUMNS[c - 1][1]:
                 cell.fill = INPUT_FILL
         ws.row_dimensions[r].height = 90
     ws.freeze_panes = "I2"
     last = FIRST_ROW + len(rows) - 1
-    for key, options in (("agreed", AGREED), ("gap", ["yes", "no"])):
-        col = next(i for i, (_, k, _) in enumerate(COLUMNS, 1) if k == key)
-        letter = ws.cell(row=1, column=col).column_letter
-        dv = DataValidation(type="list", formula1='"' + ",".join(options) + '"', allow_blank=True)
-        ws.add_data_validation(dv)
-        dv.add(f"{letter}{FIRST_ROW}:{letter}{last}")
+    letter = ws.cell(row=1, column=_col("agreed")).column_letter
+    dv = DataValidation(type="list", formula1='"' + ",".join(AGREED) + '"', allow_blank=True)
+    ws.add_data_validation(dv)
+    dv.add(f"{letter}{FIRST_ROW}:{letter}{last}")
+    add_rules_sheet(wb, rules)
+    link_rule_columns(ws, len(rules), last)
     out.parent.mkdir(parents=True, exist_ok=True)
     wb.save(out)
     n_rec = len({r["q"]["record_id"] for r in rows})
@@ -175,10 +260,17 @@ def parse_other(field: str, value, where: str, errors: list[str]):
     return _lines(text) if field in LIST_FIELDS else text
 
 
-def read_decisions(workbook: Path, expected: list[dict]) -> tuple[list[dict], list[str]]:
-    ws = load_workbook(workbook, data_only=True)["Adjudicate"]
+def read_decisions(workbook: Path, expected: list[dict],
+                   rules: list[tuple[str, str, str]]) -> tuple[list[dict], list[str]]:
+    wb = load_workbook(workbook, data_only=True)
+    ws = wb["Adjudicate"]
     if [c.value for c in ws[1]] != [h for h, _, _ in COLUMNS]:
         return [], ["the Adjudicate sheet's columns were changed; expected the original layout"]
+    in_wb = [tuple(v or "" for v in row[:3]) for row in wb["Rules"].iter_rows(min_row=2, values_only=True) if any(row)]
+    if in_wb != rules:
+        return [], ["the Rules sheet differs from the current labelling guide (sheet edited, or guide "
+                    "changed since the workbook was built)"]
+    rule_text = {rid: text for rid, _, text in rules}
     got = [row for row in ws.iter_rows(min_row=FIRST_ROW, values_only=True) if any(row)]
     if len(got) != len(expected):
         return [], [f"expected {len(expected)} rows, found {len(got)}"]
@@ -196,14 +288,17 @@ def read_decisions(workbook: Path, expected: list[dict]) -> tuple[list[dict], li
         if agreed not in AGREED:
             errors.append(f"{where}: 'Agreed' must be A, B or other")
             continue
-        if E.is_empty(cells["reason"]):
-            errors.append(f"{where}: the guide rule or reason is required")
+        rule_id = str(cells["rule_id"] or "").strip().upper()
+        if rule_id not in rule_text:
+            errors.append(f"{where}: guide rule ID '{rule_id}' is required and must be on the Rules sheet")
+        if rule_id == GAP_ID and E.is_empty(cells["notes"]):
+            errors.append(f"{where}: GAP needs an explanation in Notes")
         value = {"A": exp["a"], "B": exp["b"]}.get(agreed)
         if agreed == "other":
             value = parse_other(exp["field"], cells["other_value"], where, errors)
         decisions.append({"record_id": exp["q"]["record_id"], "field": exp["field"], "agreed": agreed,
-                          "value": value, "reason": cells["reason"],
-                          "guide_gap": str(cells["gap"] or "").strip().lower() == "yes", "notes": cells["notes"]})
+                          "value": value, "rule_id": rule_id, "rule_text": rule_text.get(rule_id),
+                          "guide_gap": rule_id == GAP_ID, "notes": cells["notes"]})
     return decisions, errors
 
 
@@ -229,13 +324,14 @@ def adjudicate(queue: list[dict], a: dict, b: dict, decisions: list[dict]) -> li
     return payloads
 
 
-def import_workbook(workbook: Path, queue_path: Path, a_db: Path, b_db: Path,
+def import_workbook(workbook: Path, queue_path: Path, a_db: Path, b_db: Path, guide: Path,
                     out_db: Path, log: Path, force: bool) -> int:
     if out_db.exists() and sqlite_manual_label_count(out_db) > 0 and not force:
         print(f"error: {out_db} already has labels; pass --force to overwrite them", file=sys.stderr)
         return 1
     queue, a, b = _sample(queue_path, a_db, b_db)
-    decisions, errors = read_decisions(workbook, disagreements(queue, a, b))
+    rules = parse_rules(guide.read_text(encoding="utf-8"))
+    decisions, errors = read_decisions(workbook, disagreements(queue, a, b), rules)
     if errors:
         print(f"{len(errors)} problem(s); nothing imported:", file=sys.stderr)
         for e in errors:
@@ -249,6 +345,8 @@ def import_workbook(workbook: Path, queue_path: Path, a_db: Path, b_db: Path,
     log.write_text(json.dumps({"n_records": len(payloads), "n_disagreements": len(decisions),
                                "agreed_counts": dict(wins),
                                "n_guide_gaps": sum(d["guide_gap"] for d in decisions),
+                               "rule_counts": dict(collections.Counter(d["rule_id"] for d in decisions)
+                                                   .most_common()),
                                "decisions": decisions}, indent=2, default=str), encoding="utf-8")
     print(f"adjudicated {len(decisions)} disagreements (A {wins['A']}, B {wins['B']}, other {wins['other']}); "
           f"wrote {len(payloads)} records to {out_db} and the log to {log}")
@@ -263,6 +361,7 @@ def main() -> int:
         p.add_argument("--queue", type=Path, default=Path("data/queue_iaa_b.jsonl"))
         p.add_argument("--a-db", type=Path, default=Path("data/labeling_fine.db"))
         p.add_argument("--b-db", type=Path, default=Path("data/labeling_iaa_b.db"))
+        p.add_argument("--guide", type=Path, default=Path("docs/LABELING_GUIDE.md"))
         if name == "build":
             p.add_argument("--out", type=Path, required=True)
         else:
@@ -272,8 +371,9 @@ def main() -> int:
             p.add_argument("--force", action="store_true")
     args = ap.parse_args()
     if args.cmd == "build":
-        return build(args.queue, args.a_db, args.b_db, args.out)
-    return import_workbook(args.workbook, args.queue, args.a_db, args.b_db, args.db, args.log, args.force)
+        return build(args.queue, args.a_db, args.b_db, args.guide, args.out)
+    return import_workbook(args.workbook, args.queue, args.a_db, args.b_db, args.guide,
+                           args.db, args.log, args.force)
 
 
 if __name__ == "__main__":
