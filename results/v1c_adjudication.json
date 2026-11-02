@@ -1,0 +1,1188 @@
+{
+  "n_records": 50,
+  "n_disagreements": 111,
+  "agreed_counts": {
+    "A": 94,
+    "B": 16,
+    "other": 1
+  },
+  "n_guide_gaps": 0,
+  "rule_counts": {
+    "R39": 22,
+    "R19": 11,
+    "R30": 10,
+    "R12": 10,
+    "R5": 5,
+    "R23": 4,
+    "R16": 4,
+    "R21": 4,
+    "R18": 4,
+    "R10": 4,
+    "R31": 3,
+    "R38": 3,
+    "R29": 3,
+    "R37": 3,
+    "R24": 3,
+    "R36": 3,
+    "R6": 3,
+    "R40": 2,
+    "R25": 2,
+    "R35": 2,
+    "R33": 1,
+    "R22": 1,
+    "R8": 1,
+    "R20": 1,
+    "R26": 1,
+    "R32": 1
+  },
+  "decisions": [
+    {
+      "record_id": "c14f356d-194c-47f0-a743-85b912019b9b:2",
+      "field": "action",
+      "agreed": "A",
+      "value": "conditional",
+      "rule_id": "R19",
+      "rule_text": "Action `conditional` : it's permitted but with a fee, fare difference, time limit or condition",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "abe2db6f-8053-4c11-b248-eedd1689554b:2",
+      "field": "penalty_type",
+      "agreed": "A",
+      "value": null,
+      "rule_id": "R30",
+      "rule_text": "Penalty Type *(empty)* : the clause mentions no charge at all",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "abe2db6f-8053-4c11-b248-eedd1689554b:2",
+      "field": "eligibility_conditions",
+      "agreed": "A",
+      "value": [
+        "reissue processed through ATC (Amadeus automated reissue)"
+      ],
+      "rule_id": "R39",
+      "rule_text": "Eligibility Conditions (one per line): who or what qualifies, as a real condition, e.g. `airline reschedules the flight by more than 4 hours`, `unused tickets only`. Don't repeat the clause and don't write \"if any\".",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "abe2db6f-8053-4c11-b248-eedd1689554b:2",
+      "field": "exceptions",
+      "agreed": "A",
+      "value": [
+        "ticket already reissued after departure in another GDS"
+      ],
+      "rule_id": "R40",
+      "rule_text": "Exceptions (one per line): who is excluded, e.g. `group bookings`, `reward tickets`. Don't put the same thing in both fields.",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "33675e61-f014-4fc5-a684-69e23b2fea17:0",
+      "field": "policy_topic",
+      "agreed": "A",
+      "value": "reissue_change",
+      "rule_id": "R12",
+      "rule_text": "Policy Topic (pick one) `reissue_change` : changing date, flight, route or upgrade; reissuing a ticket",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "33675e61-f014-4fc5-a684-69e23b2fea17:0",
+      "field": "action",
+      "agreed": "A",
+      "value": "conditional",
+      "rule_id": "R19",
+      "rule_text": "Action `conditional` : it's permitted but with a fee, fare difference, time limit or condition",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "33675e61-f014-4fc5-a684-69e23b2fea17:0",
+      "field": "penalty_type",
+      "agreed": "A",
+      "value": "fare_difference_only",
+      "rule_id": "R23",
+      "rule_text": "Penalty Type `fare_difference_only` : \"free of charge, charge difference in fare\" or just \"charge difference in fare\"",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "33675e61-f014-4fc5-a684-69e23b2fea17:0",
+      "field": "fare_difference_required",
+      "agreed": "A",
+      "value": true,
+      "rule_id": "R33",
+      "rule_text": "`fare_difference_only` vs just Fare Difference = true: use `fare_difference_only` only when the clause presents the fare difference as the whole charge (e.g. a fee-table cell: \"Free of charge, charge difference in fare\"). If a sentence just says the passenger pays the fare difference, and other fees may apply, leave Penalty Type empty and set Fare Difference to `true`.",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "4b963525-efe2-4985-8e33-220b6c4c90fe:4",
+      "field": "penalty_type",
+      "agreed": "A",
+      "value": null,
+      "rule_id": "R30",
+      "rule_text": "Penalty Type *(empty)* : the clause mentions no charge at all",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "4b963525-efe2-4985-8e33-220b6c4c90fe:4",
+      "field": "eligibility_conditions",
+      "agreed": "A",
+      "value": [
+        "passenger does not show up for a flight without advising the airline in advance"
+      ],
+      "rule_id": "R39",
+      "rule_text": "Eligibility Conditions (one per line): who or what qualifies, as a real condition, e.g. `airline reschedules the flight by more than 4 hours`, `unused tickets only`. Don't repeat the clause and don't write \"if any\".",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "4b963525-efe2-4985-8e33-220b6c4c90fe:4",
+      "field": "exceptions",
+      "agreed": "A",
+      "value": null,
+      "rule_id": "R39",
+      "rule_text": "Eligibility Conditions (one per line): who or what qualifies, as a real condition, e.g. `airline reschedules the flight by more than 4 hours`, `unused tickets only`. Don't repeat the clause and don't write \"if any\".",
+      "guide_gap": false,
+      "notes": "No One Line For Exception"
+    },
+    {
+      "record_id": "95362bf5-77e6-468b-8b12-9dd182a82d34:0",
+      "field": "decision",
+      "agreed": "B",
+      "value": "labeled",
+      "rule_id": "R5",
+      "rule_text": "Press Skip if the clause states no rule: website menus, cookie or copyright text, contact details, app ads, or a cut-off fragment (\"You can also cancel your booking up to\", \"Upgrade:\").\nOtherwise label it, even if it's off-topic (baggage, meals, documents). Those get topic `other`.",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "95362bf5-77e6-468b-8b12-9dd182a82d34:0",
+      "field": "policy_topic",
+      "agreed": "B",
+      "value": "other",
+      "rule_id": "R16",
+      "rule_text": "Policy Topic (pick one) `other` : everything else: name change, baggage, validity, documents, meals, seats, loyalty",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "95362bf5-77e6-468b-8b12-9dd182a82d34:0",
+      "field": "action",
+      "agreed": "A",
+      "value": null,
+      "rule_id": "R21",
+      "rule_text": "Action `unknown` : the clause doesn't say whether it's allowed (e.g. \"Hand baggage: 7 kg\")",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "1b96bfbd-513d-4120-98bf-6d3f2e3d4c0e:6",
+      "field": "policy_topic",
+      "agreed": "A",
+      "value": "reissue_change",
+      "rule_id": "R12",
+      "rule_text": "Policy Topic (pick one) `reissue_change` : changing date, flight, route or upgrade; reissuing a ticket",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "a7aa1de9-3800-4d4c-ac95-541c6f601d5b:5",
+      "field": "penalty_type",
+      "agreed": "B",
+      "value": "fixed_amount",
+      "rule_id": "R25",
+      "rule_text": "Penalty Type `fixed_amount` : one fixed fee, e.g. \"THB 225 per passenger\"",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "a7aa1de9-3800-4d4c-ac95-541c6f601d5b:5",
+      "field": "penalty_amount",
+      "agreed": "B",
+      "value": 100.0,
+      "rule_id": "R31",
+      "rule_text": "Penalty Amount / Currency: only when the clause gives one fee, e.g. `225` / `THB`. Use the currency code (THB, USD, AED, INR, MYR, QAR).",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "a7aa1de9-3800-4d4c-ac95-541c6f601d5b:5",
+      "field": "penalty_currency",
+      "agreed": "B",
+      "value": "USD",
+      "rule_id": "R31",
+      "rule_text": "Penalty Amount / Currency: only when the clause gives one fee, e.g. `225` / `THB`. Use the currency code (THB, USD, AED, INR, MYR, QAR).",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "6ac99804-b9be-4535-8273-5b836e212b61:5",
+      "field": "before_after_departure",
+      "agreed": "A",
+      "value": "not_applicable",
+      "rule_id": "R38",
+      "rule_text": "Before/After Departure: `before_departure`, `after_departure`, `both`, `not_applicable`, or empty if not stated.",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "deab5d5c-6cfa-4ce7-9967-e466f19d4f71:1",
+      "field": "policy_topic",
+      "agreed": "A",
+      "value": "reissue_change",
+      "rule_id": "R12",
+      "rule_text": "Policy Topic (pick one) `reissue_change` : changing date, flight, route or upgrade; reissuing a ticket",
+      "guide_gap": false,
+      "notes": "CHARGE DIFFERNCE CAN ONLY HAPPEN FOR REISSUE"
+    },
+    {
+      "record_id": "deab5d5c-6cfa-4ce7-9967-e466f19d4f71:1",
+      "field": "action",
+      "agreed": "A",
+      "value": "conditional",
+      "rule_id": "R19",
+      "rule_text": "Action `conditional` : it's permitted but with a fee, fare difference, time limit or condition",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "deab5d5c-6cfa-4ce7-9967-e466f19d4f71:1",
+      "field": "penalty_type",
+      "agreed": "A",
+      "value": "fare_difference_only",
+      "rule_id": "R23",
+      "rule_text": "Penalty Type `fare_difference_only` : \"free of charge, charge difference in fare\" or just \"charge difference in fare\"",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "deab5d5c-6cfa-4ce7-9967-e466f19d4f71:1",
+      "field": "fare_difference_required",
+      "agreed": "A",
+      "value": true,
+      "rule_id": "R35",
+      "rule_text": "Fare Difference Required: `true` only if the clause says fare difference applies; `false` only if it explicitly says none. Otherwise empty.",
+      "guide_gap": false,
+      "notes": "HERE IT DOESN'T SAY ABOUT ANY CHARGE THAT DOES NOT MEAN OTHER CHARGES MIGHT NOT APPLY. SO ASSUMING THAT ONLY FARE DIFFERENCE WILL APPLY IS NOT OKAY EITHER."
+    },
+    {
+      "record_id": "b72f3a73-27ae-4436-8355-b9e68e7b3c36:5",
+      "field": "policy_topic",
+      "agreed": "A",
+      "value": "reissue_change",
+      "rule_id": "R12",
+      "rule_text": "Policy Topic (pick one) `reissue_change` : changing date, flight, route or upgrade; reissuing a ticket",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "b72f3a73-27ae-4436-8355-b9e68e7b3c36:5",
+      "field": "action",
+      "agreed": "A",
+      "value": "allowed",
+      "rule_id": "R18",
+      "rule_text": "Action `allowed` : it's permitted and nothing is attached (no fee, no time limit, no condition)",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "e5379f27-21bf-4f67-bace-47de7ad7522f:1",
+      "field": "action",
+      "agreed": "A",
+      "value": "conditional",
+      "rule_id": "R19",
+      "rule_text": "Action `conditional` : it's permitted but with a fee, fare difference, time limit or condition",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "e5379f27-21bf-4f67-bace-47de7ad7522f:1",
+      "field": "eligibility_conditions",
+      "agreed": "A",
+      "value": [
+        "certain types of articles"
+      ],
+      "rule_id": "R39",
+      "rule_text": "Eligibility Conditions (one per line): who or what qualifies, as a real condition, e.g. `airline reschedules the flight by more than 4 hours`, `unused tickets only`. Don't repeat the clause and don't write \"if any\".",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "60f54d17-746d-482a-b9ed-f386a81a91a4:3",
+      "field": "policy_topic",
+      "agreed": "A",
+      "value": "refund",
+      "rule_id": "R10",
+      "rule_text": "Policy Topic (pick one) `refund` : getting money back, including \"Refund/Cancellation\" written together",
+      "guide_gap": false,
+      "notes": "It doesn't say about just refund so in the notes other criterias needed to be placed as well"
+    },
+    {
+      "record_id": "60f54d17-746d-482a-b9ed-f386a81a91a4:3",
+      "field": "penalty_type",
+      "agreed": "A",
+      "value": "forfeiture",
+      "rule_id": "R29",
+      "rule_text": "Penalty Type `unknown` : there is a charge but the clause doesn't say what kind",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "60f54d17-746d-482a-b9ed-f386a81a91a4:3",
+      "field": "eligibility_conditions",
+      "agreed": "A",
+      "value": [
+        "Last Minute Upgrade accepted and payment charged"
+      ],
+      "rule_id": "R39",
+      "rule_text": "Eligibility Conditions (one per line): who or what qualifies, as a real condition, e.g. `airline reschedules the flight by more than 4 hours`, `unused tickets only`. Don't repeat the clause and don't write \"if any\".",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "60f54d17-746d-482a-b9ed-f386a81a91a4:3",
+      "field": "exceptions",
+      "agreed": "A",
+      "value": null,
+      "rule_id": "R39",
+      "rule_text": "Eligibility Conditions (one per line): who or what qualifies, as a real condition, e.g. `airline reschedules the flight by more than 4 hours`, `unused tickets only`. Don't repeat the clause and don't write \"if any\".",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "9fe896fc-58ab-4336-93f6-b91886b3c83f:0",
+      "field": "policy_topic",
+      "agreed": "A",
+      "value": "refund",
+      "rule_id": "R10",
+      "rule_text": "Policy Topic (pick one) `refund` : getting money back, including \"Refund/Cancellation\" written together",
+      "guide_gap": false,
+      "notes": "USING THE REFUND CAHS PASSENGER CAN BUY ANYTHING"
+    },
+    {
+      "record_id": "9fe896fc-58ab-4336-93f6-b91886b3c83f:0",
+      "field": "action",
+      "agreed": "A",
+      "value": "conditional",
+      "rule_id": "R19",
+      "rule_text": "Action `conditional` : it's permitted but with a fee, fare difference, time limit or condition",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "9fe896fc-58ab-4336-93f6-b91886b3c83f:0",
+      "field": "eligibility_conditions",
+      "agreed": "A",
+      "value": [
+        "airline reschedules the flight by more than 4 hours",
+        "passenger must notify at least 3 hours before the first segment"
+      ],
+      "rule_id": "R39",
+      "rule_text": "Eligibility Conditions (one per line): who or what qualifies, as a real condition, e.g. `airline reschedules the flight by more than 4 hours`, `unused tickets only`. Don't repeat the clause and don't write \"if any\".",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "9fe896fc-58ab-4336-93f6-b91886b3c83f:0",
+      "field": "exceptions",
+      "agreed": "A",
+      "value": null,
+      "rule_id": "R39",
+      "rule_text": "Eligibility Conditions (one per line): who or what qualifies, as a real condition, e.g. `airline reschedules the flight by more than 4 hours`, `unused tickets only`. Don't repeat the clause and don't write \"if any\".",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "95f52915-bd73-46ae-9afa-58284ad5c863:2",
+      "field": "policy_topic",
+      "agreed": "A",
+      "value": "reissue_change",
+      "rule_id": "R12",
+      "rule_text": "Policy Topic (pick one) `reissue_change` : changing date, flight, route or upgrade; reissuing a ticket",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "95f52915-bd73-46ae-9afa-58284ad5c863:2",
+      "field": "action",
+      "agreed": "A",
+      "value": "conditional",
+      "rule_id": "R19",
+      "rule_text": "Action `conditional` : it's permitted but with a fee, fare difference, time limit or condition",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "95f52915-bd73-46ae-9afa-58284ad5c863:2",
+      "field": "penalty_type",
+      "agreed": "A",
+      "value": "fare_difference_only",
+      "rule_id": "R23",
+      "rule_text": "Penalty Type `fare_difference_only` : \"free of charge, charge difference in fare\" or just \"charge difference in fare\"",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "95f52915-bd73-46ae-9afa-58284ad5c863:2",
+      "field": "fare_difference_required",
+      "agreed": "A",
+      "value": true,
+      "rule_id": "R35",
+      "rule_text": "Fare Difference Required: `true` only if the clause says fare difference applies; `false` only if it explicitly says none. Otherwise empty.",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "3a983975-6872-4192-8e7f-ae57b44c694c:5",
+      "field": "policy_topic",
+      "agreed": "A",
+      "value": "refund",
+      "rule_id": "R10",
+      "rule_text": "Policy Topic (pick one) `refund` : getting money back, including \"Refund/Cancellation\" written together",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "3a983975-6872-4192-8e7f-ae57b44c694c:5",
+      "field": "penalty_type",
+      "agreed": "A",
+      "value": "free",
+      "rule_id": "R22",
+      "rule_text": "Penalty Type `free` : nothing is charged at all",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "3a983975-6872-4192-8e7f-ae57b44c694c:5",
+      "field": "before_after_departure",
+      "agreed": "A",
+      "value": "not_applicable",
+      "rule_id": "R38",
+      "rule_text": "Before/After Departure: `before_departure`, `after_departure`, `both`, `not_applicable`, or empty if not stated.",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "3a983975-6872-4192-8e7f-ae57b44c694c:5",
+      "field": "time_window",
+      "agreed": "other",
+      "value": "24 hours",
+      "rule_id": "R37",
+      "rule_text": "Time Window: `6 hours`, `24 hours`, `7 days`, `31 days`; ranges `8-30 days`, `24 hours-7 days`. Lower-case, number plus unit.",
+      "guide_gap": false,
+      "notes": "from the booking time"
+    },
+    {
+      "record_id": "3a983975-6872-4192-8e7f-ae57b44c694c:5",
+      "field": "eligibility_conditions",
+      "agreed": "A",
+      "value": [
+        "flight to or from the USA",
+        "reservation made at least one week before departure"
+      ],
+      "rule_id": "R39",
+      "rule_text": "Eligibility Conditions (one per line): who or what qualifies, as a real condition, e.g. `airline reschedules the flight by more than 4 hours`, `unused tickets only`. Don't repeat the clause and don't write \"if any\".",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "2fe0b71a-afd1-4216-bdb7-9e5bcb80d997:1",
+      "field": "policy_topic",
+      "agreed": "A",
+      "value": "reissue_change",
+      "rule_id": "R12",
+      "rule_text": "Policy Topic (pick one) `reissue_change` : changing date, flight, route or upgrade; reissuing a ticket",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "1678e462-e5c2-4b20-a4b5-c8f6e4271fe6:7",
+      "field": "decision",
+      "agreed": "B",
+      "value": "labeled",
+      "rule_id": "R16",
+      "rule_text": "Policy Topic (pick one) `other` : everything else: name change, baggage, validity, documents, meals, seats, loyalty",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "1678e462-e5c2-4b20-a4b5-c8f6e4271fe6:7",
+      "field": "policy_topic",
+      "agreed": "B",
+      "value": "other",
+      "rule_id": "R16",
+      "rule_text": "Policy Topic (pick one) `other` : everything else: name change, baggage, validity, documents, meals, seats, loyalty",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "1678e462-e5c2-4b20-a4b5-c8f6e4271fe6:7",
+      "field": "action",
+      "agreed": "A",
+      "value": null,
+      "rule_id": "R21",
+      "rule_text": "Action `unknown` : the clause doesn't say whether it's allowed (e.g. \"Hand baggage: 7 kg\")",
+      "guide_gap": false,
+      "notes": "NOT SAYING ANYTHING ABOUT ALLOWING, AND CANNOT FIND ANY RULE FOR ACTION=EMPTY"
+    },
+    {
+      "record_id": "c8dfcbf9-0e5e-4898-992e-16bbcc8b3986:1",
+      "field": "penalty_type",
+      "agreed": "B",
+      "value": "mixed",
+      "rule_id": "R24",
+      "rule_text": "Penalty Type `mixed` : two or more kinds of charge together: a fee and the fare difference, or a fixed fee and a percentage",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "c8dfcbf9-0e5e-4898-992e-16bbcc8b3986:1",
+      "field": "penalty_amount",
+      "agreed": "B",
+      "value": 200.0,
+      "rule_id": "R24",
+      "rule_text": "Penalty Type `mixed` : two or more kinds of charge together: a fee and the fare difference, or a fixed fee and a percentage",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "c8dfcbf9-0e5e-4898-992e-16bbcc8b3986:1",
+      "field": "penalty_percent",
+      "agreed": "B",
+      "value": 0.0,
+      "rule_id": "R24",
+      "rule_text": "Penalty Type `mixed` : two or more kinds of charge together: a fee and the fare difference, or a fixed fee and a percentage",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "c8dfcbf9-0e5e-4898-992e-16bbcc8b3986:1",
+      "field": "penalty_currency",
+      "agreed": "B",
+      "value": "THB",
+      "rule_id": "R31",
+      "rule_text": "Penalty Amount / Currency: only when the clause gives one fee, e.g. `225` / `THB`. Use the currency code (THB, USD, AED, INR, MYR, QAR).",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "c8dfcbf9-0e5e-4898-992e-16bbcc8b3986:1",
+      "field": "time_window",
+      "agreed": "B",
+      "value": "31 days",
+      "rule_id": "R37",
+      "rule_text": "Time Window: `6 hours`, `24 hours`, `7 days`, `31 days`; ranges `8-30 days`, `24 hours-7 days`. Lower-case, number plus unit.",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "c8dfcbf9-0e5e-4898-992e-16bbcc8b3986:1",
+      "field": "tax_refund_rule",
+      "agreed": "B",
+      "value": null,
+      "rule_id": "R36",
+      "rule_text": "Tax Refund Rule: short phrase, only if taxes are mentioned: `taxes refundable`, `airport tax included in refund`, `taxes not refundable`.",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "c8dfcbf9-0e5e-4898-992e-16bbcc8b3986:1",
+      "field": "eligibility_conditions",
+      "agreed": "A",
+      "value": null,
+      "rule_id": "R39",
+      "rule_text": "Eligibility Conditions (one per line): who or what qualifies, as a real condition, e.g. `airline reschedules the flight by more than 4 hours`, `unused tickets only`. Don't repeat the clause and don't write \"if any\".",
+      "guide_gap": false,
+      "notes": "The eligibility condition is not explicit in the clause but its for domestic"
+    },
+    {
+      "record_id": "1b96bfbd-513d-4120-98bf-6d3f2e3d4c0e:2",
+      "field": "decision",
+      "agreed": "B",
+      "value": "labeled",
+      "rule_id": "R5",
+      "rule_text": "Press Skip if the clause states no rule: website menus, cookie or copyright text, contact details, app ads, or a cut-off fragment (\"You can also cancel your booking up to\", \"Upgrade:\").\nOtherwise label it, even if it's off-topic (baggage, meals, documents). Those get topic `other`.",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "1b96bfbd-513d-4120-98bf-6d3f2e3d4c0e:2",
+      "field": "policy_topic",
+      "agreed": "B",
+      "value": "other",
+      "rule_id": "R16",
+      "rule_text": "Policy Topic (pick one) `other` : everything else: name change, baggage, validity, documents, meals, seats, loyalty",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "1b96bfbd-513d-4120-98bf-6d3f2e3d4c0e:2",
+      "field": "action",
+      "agreed": "A",
+      "value": null,
+      "rule_id": "R21",
+      "rule_text": "Action `unknown` : the clause doesn't say whether it's allowed (e.g. \"Hand baggage: 7 kg\")",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "1b96bfbd-513d-4120-98bf-6d3f2e3d4c0e:2",
+      "field": "penalty_type",
+      "agreed": "A",
+      "value": null,
+      "rule_id": "R30",
+      "rule_text": "Penalty Type *(empty)* : the clause mentions no charge at all",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "3819c330-6705-4abd-917e-6caf7ea5bbbb:0",
+      "field": "decision",
+      "agreed": "A",
+      "value": "skip",
+      "rule_id": "R6",
+      "rule_text": "Cut-off clauses: skip only if you can't tell what the rule is (\"to this channel dues immediately at change\", \"...roundtrip booking and\"). If the rule is still fully clear despite the cut, label it with the same label as the complete version, and say it's cut off in Notes.",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "3819c330-6705-4abd-917e-6caf7ea5bbbb:0",
+      "field": "policy_topic",
+      "agreed": "A",
+      "value": null,
+      "rule_id": "R6",
+      "rule_text": "Cut-off clauses: skip only if you can't tell what the rule is (\"to this channel dues immediately at change\", \"...roundtrip booking and\"). If the rule is still fully clear despite the cut, label it with the same label as the complete version, and say it's cut off in Notes.",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "3819c330-6705-4abd-917e-6caf7ea5bbbb:0",
+      "field": "action",
+      "agreed": "A",
+      "value": null,
+      "rule_id": "R6",
+      "rule_text": "Cut-off clauses: skip only if you can't tell what the rule is (\"to this channel dues immediately at change\", \"...roundtrip booking and\"). If the rule is still fully clear despite the cut, label it with the same label as the complete version, and say it's cut off in Notes.",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "8bba73f4-8038-4b19-a97a-6cb4f6250b64:4",
+      "field": "action",
+      "agreed": "A",
+      "value": "conditional",
+      "rule_id": "R18",
+      "rule_text": "Action `allowed` : it's permitted and nothing is attached (no fee, no time limit, no condition)",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "8bba73f4-8038-4b19-a97a-6cb4f6250b64:4",
+      "field": "penalty_type",
+      "agreed": "A",
+      "value": null,
+      "rule_id": "R30",
+      "rule_text": "Penalty Type *(empty)* : the clause mentions no charge at all",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "8bba73f4-8038-4b19-a97a-6cb4f6250b64:4",
+      "field": "eligibility_conditions",
+      "agreed": "A",
+      "value": [
+        "change to the same product type only"
+      ],
+      "rule_id": "R39",
+      "rule_text": "Eligibility Conditions (one per line): who or what qualifies, as a real condition, e.g. `airline reschedules the flight by more than 4 hours`, `unused tickets only`. Don't repeat the clause and don't write \"if any\".",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "f9ef0db0-72f1-4fbb-abdc-7550b081d115:0",
+      "field": "penalty_type",
+      "agreed": "A",
+      "value": null,
+      "rule_id": "R30",
+      "rule_text": "Penalty Type *(empty)* : the clause mentions no charge at all",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "a7aa1de9-3800-4d4c-ac95-541c6f601d5b:1",
+      "field": "penalty_type",
+      "agreed": "A",
+      "value": "unknown",
+      "rule_id": "R29",
+      "rule_text": "Penalty Type `unknown` : there is a charge but the clause doesn't say what kind",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "a7aa1de9-3800-4d4c-ac95-541c6f601d5b:1",
+      "field": "eligibility_conditions",
+      "agreed": "A",
+      "value": [
+        "passenger denied check-in for invalid travel documents (passport, visa, etc.)"
+      ],
+      "rule_id": "R39",
+      "rule_text": "Eligibility Conditions (one per line): who or what qualifies, as a real condition, e.g. `airline reschedules the flight by more than 4 hours`, `unused tickets only`. Don't repeat the clause and don't write \"if any\".",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "a7aa1de9-3800-4d4c-ac95-541c6f601d5b:1",
+      "field": "exceptions",
+      "agreed": "A",
+      "value": null,
+      "rule_id": "R39",
+      "rule_text": "Eligibility Conditions (one per line): who or what qualifies, as a real condition, e.g. `airline reschedules the flight by more than 4 hours`, `unused tickets only`. Don't repeat the clause and don't write \"if any\".",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "28c0e3e7-d316-4845-9c4a-357338593b4b:2",
+      "field": "action",
+      "agreed": "A",
+      "value": "conditional",
+      "rule_id": "R19",
+      "rule_text": "Action `conditional` : it's permitted but with a fee, fare difference, time limit or condition",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "28c0e3e7-d316-4845-9c4a-357338593b4b:2",
+      "field": "penalty_type",
+      "agreed": "A",
+      "value": "fixed_amount",
+      "rule_id": "R25",
+      "rule_text": "Penalty Type `fixed_amount` : one fixed fee, e.g. \"THB 225 per passenger\"",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "28c0e3e7-d316-4845-9c4a-357338593b4b:2",
+      "field": "eligibility_conditions",
+      "agreed": "A",
+      "value": null,
+      "rule_id": "R39",
+      "rule_text": "Eligibility Conditions (one per line): who or what qualifies, as a real condition, e.g. `airline reschedules the flight by more than 4 hours`, `unused tickets only`. Don't repeat the clause and don't write \"if any\".",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "ae5f2098-9dcf-40d5-98ee-ce4144fc3812:6",
+      "field": "policy_topic",
+      "agreed": "A",
+      "value": "reissue_change",
+      "rule_id": "R8",
+      "rule_text": "Two complete rules in one clause: label the one about permission or fees; put the other in Notes.",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "ae5f2098-9dcf-40d5-98ee-ce4144fc3812:6",
+      "field": "eligibility_conditions",
+      "agreed": "A",
+      "value": null,
+      "rule_id": "R39",
+      "rule_text": "Eligibility Conditions (one per line): who or what qualifies, as a real condition, e.g. `airline reschedules the flight by more than 4 hours`, `unused tickets only`. Don't repeat the clause and don't write \"if any\".",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "3a0f34f1-c15f-4ef9-915b-4a6b9e862f2e:1",
+      "field": "policy_topic",
+      "agreed": "A",
+      "value": "reissue_change",
+      "rule_id": "R12",
+      "rule_text": "Policy Topic (pick one) `reissue_change` : changing date, flight, route or upgrade; reissuing a ticket",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "3a0f34f1-c15f-4ef9-915b-4a6b9e862f2e:1",
+      "field": "action",
+      "agreed": "A",
+      "value": "conditional",
+      "rule_id": "R19",
+      "rule_text": "Action `conditional` : it's permitted but with a fee, fare difference, time limit or condition",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "3a0f34f1-c15f-4ef9-915b-4a6b9e862f2e:1",
+      "field": "penalty_type",
+      "agreed": "A",
+      "value": "fare_difference_only",
+      "rule_id": "R23",
+      "rule_text": "Penalty Type `fare_difference_only` : \"free of charge, charge difference in fare\" or just \"charge difference in fare\"",
+      "guide_gap": false,
+      "notes": "BOTH MODIFICATION FEE AND FARE DIFERENCE WILL BE APPLIED"
+    },
+    {
+      "record_id": "3a0f34f1-c15f-4ef9-915b-4a6b9e862f2e:1",
+      "field": "eligibility_conditions",
+      "agreed": "A",
+      "value": [
+        "Value fare",
+        "one modification only"
+      ],
+      "rule_id": "R39",
+      "rule_text": "Eligibility Conditions (one per line): who or what qualifies, as a real condition, e.g. `airline reschedules the flight by more than 4 hours`, `unused tickets only`. Don't repeat the clause and don't write \"if any\".",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "aeaf4745-100e-4fab-96eb-06390c1e3203:5",
+      "field": "policy_topic",
+      "agreed": "A",
+      "value": "reissue_change",
+      "rule_id": "R12",
+      "rule_text": "Policy Topic (pick one) `reissue_change` : changing date, flight, route or upgrade; reissuing a ticket",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "aeaf4745-100e-4fab-96eb-06390c1e3203:5",
+      "field": "penalty_type",
+      "agreed": "A",
+      "value": null,
+      "rule_id": "R21",
+      "rule_text": "Action `unknown` : the clause doesn't say whether it's allowed (e.g. \"Hand baggage: 7 kg\")",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "aeaf4745-100e-4fab-96eb-06390c1e3203:5",
+      "field": "eligibility_conditions",
+      "agreed": "A",
+      "value": [
+        "fare governed by a maximum stay rule"
+      ],
+      "rule_id": "R39",
+      "rule_text": "Eligibility Conditions (one per line): who or what qualifies, as a real condition, e.g. `airline reschedules the flight by more than 4 hours`, `unused tickets only`. Don't repeat the clause and don't write \"if any\".",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "e0f9b865-ccab-44ef-92c7-402eec78a8c5:1",
+      "field": "action",
+      "agreed": "A",
+      "value": "not_allowed",
+      "rule_id": "R20",
+      "rule_text": "Action `not_allowed` : \"not permitted\", \"not available\", \"non-refundable\"",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "e0f9b865-ccab-44ef-92c7-402eec78a8c5:1",
+      "field": "penalty_type",
+      "agreed": "A",
+      "value": null,
+      "rule_id": "R30",
+      "rule_text": "Penalty Type *(empty)* : the clause mentions no charge at all",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "e0f9b865-ccab-44ef-92c7-402eec78a8c5:1",
+      "field": "eligibility_conditions",
+      "agreed": "A",
+      "value": [
+        "passenger fails to comply with Article 5.7 (requirements not in this clause)"
+      ],
+      "rule_id": "R39",
+      "rule_text": "Eligibility Conditions (one per line): who or what qualifies, as a real condition, e.g. `airline reschedules the flight by more than 4 hours`, `unused tickets only`. Don't repeat the clause and don't write \"if any\".",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "41b500fa-f50f-4e13-94ef-2165f7f483e7:5",
+      "field": "policy_topic",
+      "agreed": "A",
+      "value": "reissue_change",
+      "rule_id": "R12",
+      "rule_text": "Policy Topic (pick one) `reissue_change` : changing date, flight, route or upgrade; reissuing a ticket",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "41b500fa-f50f-4e13-94ef-2165f7f483e7:5",
+      "field": "action",
+      "agreed": "A",
+      "value": "conditional",
+      "rule_id": "R19",
+      "rule_text": "Action `conditional` : it's permitted but with a fee, fare difference, time limit or condition",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "41b500fa-f50f-4e13-94ef-2165f7f483e7:5",
+      "field": "penalty_type",
+      "agreed": "A",
+      "value": null,
+      "rule_id": "R30",
+      "rule_text": "Penalty Type *(empty)* : the clause mentions no charge at all",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "41b500fa-f50f-4e13-94ef-2165f7f483e7:5",
+      "field": "eligibility_conditions",
+      "agreed": "A",
+      "value": [
+        "Malaysia Airlines Award Travel ticket",
+        "reissue to a higher fare"
+      ],
+      "rule_id": "R39",
+      "rule_text": "Eligibility Conditions (one per line): who or what qualifies, as a real condition, e.g. `airline reschedules the flight by more than 4 hours`, `unused tickets only`. Don't repeat the clause and don't write \"if any\".",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "35bfa2bf-cd67-46b7-865d-28144d89996a:4",
+      "field": "action",
+      "agreed": "B",
+      "value": "allowed",
+      "rule_id": "R18",
+      "rule_text": "Action `allowed` : it's permitted and nothing is attached (no fee, no time limit, no condition)",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "35bfa2bf-cd67-46b7-865d-28144d89996a:4",
+      "field": "penalty_type",
+      "agreed": "A",
+      "value": null,
+      "rule_id": "R30",
+      "rule_text": "Penalty Type *(empty)* : the clause mentions no charge at all",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "3a0f34f1-c15f-4ef9-915b-4a6b9e862f2e:4",
+      "field": "policy_topic",
+      "agreed": "A",
+      "value": "reissue_change",
+      "rule_id": "R12",
+      "rule_text": "Policy Topic (pick one) `reissue_change` : changing date, flight, route or upgrade; reissuing a ticket",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "3a0f34f1-c15f-4ef9-915b-4a6b9e862f2e:4",
+      "field": "penalty_type",
+      "agreed": "A",
+      "value": null,
+      "rule_id": "R30",
+      "rule_text": "Penalty Type *(empty)* : the clause mentions no charge at all",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "18f5e79e-9af9-4007-9702-6067cf5c0c7f:5",
+      "field": "action",
+      "agreed": "A",
+      "value": "conditional",
+      "rule_id": "R19",
+      "rule_text": "Action `conditional` : it's permitted but with a fee, fare difference, time limit or condition",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "20add039-0a20-485d-813a-2229ac311b52:0",
+      "field": "action",
+      "agreed": "A",
+      "value": "allowed",
+      "rule_id": "R18",
+      "rule_text": "Action `allowed` : it's permitted and nothing is attached (no fee, no time limit, no condition)",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "2626b271-deb5-489d-915e-476d9fcd14c3:0",
+      "field": "policy_topic",
+      "agreed": "A",
+      "value": "refund",
+      "rule_id": "R10",
+      "rule_text": "Policy Topic (pick one) `refund` : getting money back, including \"Refund/Cancellation\" written together",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "2626b271-deb5-489d-915e-476d9fcd14c3:0",
+      "field": "penalty_type",
+      "agreed": "A",
+      "value": "percentage",
+      "rule_id": "R26",
+      "rule_text": "Penalty Type `percentage` : a percentage is lost or kept, e.g. \"refund 75%\"",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "2626b271-deb5-489d-915e-476d9fcd14c3:0",
+      "field": "penalty_percent",
+      "agreed": "A",
+      "value": 5.0,
+      "rule_id": "R32",
+      "rule_text": "Penalty Percent: what the passenger loses, not what they get back. Refund 75% \u2192 `25`.",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "2626b271-deb5-489d-915e-476d9fcd14c3:0",
+      "field": "tax_refund_rule",
+      "agreed": "A",
+      "value": "taxes refundable; refund fee 5% of refundable taxes",
+      "rule_id": "R36",
+      "rule_text": "Tax Refund Rule: short phrase, only if taxes are mentioned: `taxes refundable`, `airport tax included in refund`, `taxes not refundable`.",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "2626b271-deb5-489d-915e-476d9fcd14c3:0",
+      "field": "exceptions",
+      "agreed": "A",
+      "value": [
+        "involuntary scenarios (flight reschedule or flight cancellation)"
+      ],
+      "rule_id": "R40",
+      "rule_text": "Exceptions (one per line): who is excluded, e.g. `group bookings`, `reward tickets`. Don't put the same thing in both fields.",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "6136d3d6-3994-4de9-8239-325d14273bfd:2",
+      "field": "action",
+      "agreed": "A",
+      "value": "conditional",
+      "rule_id": "R19",
+      "rule_text": "Action `conditional` : it's permitted but with a fee, fare difference, time limit or condition",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "6136d3d6-3994-4de9-8239-325d14273bfd:2",
+      "field": "eligibility_conditions",
+      "agreed": "A",
+      "value": [
+        "purchasing tickets for infants or children (2-11 years)"
+      ],
+      "rule_id": "R39",
+      "rule_text": "Eligibility Conditions (one per line): who or what qualifies, as a real condition, e.g. `airline reschedules the flight by more than 4 hours`, `unused tickets only`. Don't repeat the clause and don't write \"if any\".",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "3e492e9d-6371-4607-a8fd-8d0927b3cbea:2",
+      "field": "penalty_type",
+      "agreed": "A",
+      "value": null,
+      "rule_id": "R30",
+      "rule_text": "Penalty Type *(empty)* : the clause mentions no charge at all",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "461c673f-fe61-41bf-a75b-33efb5375544:2",
+      "field": "before_after_departure",
+      "agreed": "A",
+      "value": "before_departure",
+      "rule_id": "R38",
+      "rule_text": "Before/After Departure: `before_departure`, `after_departure`, `both`, `not_applicable`, or empty if not stated.",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "461c673f-fe61-41bf-a75b-33efb5375544:2",
+      "field": "time_window",
+      "agreed": "A",
+      "value": "72 hours-11 months",
+      "rule_id": "R37",
+      "rule_text": "Time Window: `6 hours`, `24 hours`, `7 days`, `31 days`; ranges `8-30 days`, `24 hours-7 days`. Lower-case, number plus unit.",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "461c673f-fe61-41bf-a75b-33efb5375544:2",
+      "field": "eligibility_conditions",
+      "agreed": "A",
+      "value": [
+        "advance reservations paid and ticketed at a THAI city office"
+      ],
+      "rule_id": "R39",
+      "rule_text": "Eligibility Conditions (one per line): who or what qualifies, as a real condition, e.g. `airline reschedules the flight by more than 4 hours`, `unused tickets only`. Don't repeat the clause and don't write \"if any\".",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "b72f3a73-27ae-4436-8355-b9e68e7b3c36:4",
+      "field": "decision",
+      "agreed": "A",
+      "value": "skip",
+      "rule_id": "R5",
+      "rule_text": "Press Skip if the clause states no rule: website menus, cookie or copyright text, contact details, app ads, or a cut-off fragment (\"You can also cancel your booking up to\", \"Upgrade:\").\nOtherwise label it, even if it's off-topic (baggage, meals, documents). Those get topic `other`.",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "b72f3a73-27ae-4436-8355-b9e68e7b3c36:4",
+      "field": "policy_topic",
+      "agreed": "A",
+      "value": null,
+      "rule_id": "R5",
+      "rule_text": "Press Skip if the clause states no rule: website menus, cookie or copyright text, contact details, app ads, or a cut-off fragment (\"You can also cancel your booking up to\", \"Upgrade:\").\nOtherwise label it, even if it's off-topic (baggage, meals, documents). Those get topic `other`.",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "b72f3a73-27ae-4436-8355-b9e68e7b3c36:4",
+      "field": "action",
+      "agreed": "A",
+      "value": null,
+      "rule_id": "R5",
+      "rule_text": "Press Skip if the clause states no rule: website menus, cookie or copyright text, contact details, app ads, or a cut-off fragment (\"You can also cancel your booking up to\", \"Upgrade:\").\nOtherwise label it, even if it's off-topic (baggage, meals, documents). Those get topic `other`.",
+      "guide_gap": false,
+      "notes": "R16"
+    },
+    {
+      "record_id": "44363cef-7cd9-47c4-b0b7-397347eebc94:2",
+      "field": "penalty_type",
+      "agreed": "A",
+      "value": "unknown",
+      "rule_id": "R29",
+      "rule_text": "Penalty Type `unknown` : there is a charge but the clause doesn't say what kind",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "44363cef-7cd9-47c4-b0b7-397347eebc94:2",
+      "field": "tax_refund_rule",
+      "agreed": "A",
+      "value": "Taxes Refundable",
+      "rule_id": "R36",
+      "rule_text": "Tax Refund Rule: short phrase, only if taxes are mentioned: `taxes refundable`, `airport tax included in refund`, `taxes not refundable`.",
+      "guide_gap": false,
+      "notes": null
+    },
+    {
+      "record_id": "44363cef-7cd9-47c4-b0b7-397347eebc94:2",
+      "field": "exceptions",
+      "agreed": "A",
+      "value": [
+        "EXCEPT MOP (Member of Parliament), Group Booking and reward tickets"
+      ],
+      "rule_id": "R39",
+      "rule_text": "Eligibility Conditions (one per line): who or what qualifies, as a real condition, e.g. `airline reschedules the flight by more than 4 hours`, `unused tickets only`. Don't repeat the clause and don't write \"if any\".",
+      "guide_gap": false,
+      "notes": null
+    }
+  ]
+}

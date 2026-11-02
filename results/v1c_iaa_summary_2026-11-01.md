@@ -64,3 +64,41 @@ changes labelled `cancellation` (4), and 5 records A skipped but B labelled.
 - Next: adjudicate the 111 field disagreements on 39 records
   (`scripts/adjudication_sheet.py`), report kappa before adjudication, and score
   against the adjudicated set.
+
+## Adjudication (2026-11-02)
+
+A and B went through all 111 field disagreements on 39 records together, using only
+the guide (`scripts/adjudication_sheet.py`, rules sheet R1-R60 + GAP; log:
+`results/v1c_adjudication.json`). Every decision names the guide rule that decided it.
+
+- Outcome: A's value kept 94/111 (85%), B's 16, a new value 1; no row marked GAP.
+- Most used rules: R39 eligibility (22), R19 action `conditional` (11), R30 empty
+  penalty type (10), R12 topic `reissue_change` (10).
+- Agreement to report is the pre-adjudication kappa above. Post-adjudication kappa
+  (topic 1.0) is the outcome of discussion, not agreement.
+
+Methods scored against the adjudicated set (micro F1 x100; `results/v1c_iaa_adjudicated.json`):
+
+| Method | vs A | vs adjudicated |
+|---|---|---|
+| Rule-based | 50.2 | 50.0 |
+| Qwen 7B | 48.5 | 49.8 |
+| Qwen 7B + cite | 28.6 | 30.8 |
+| Sonnet 5.5 | 65.2 | 67.3 |
+| Sonnet 5.5 + cite | 69.8 | 72.0 |
+| Opus 5.5 | 68.8 | 71.3 |
+| Opus 5.5 + cite | 74.5 | 75.9 |
+| Opus 5.5 + cite + guide | 75.7 | 77.0 |
+
+| Comparison (vs adjudicated) | Delta [95% CI] |
+|---|---|
+| Opus - Rule-based | +21.3 [+13.2, +29.9]* |
+| Opus + cite + guide - Rule-based | +27.0 [+18.1, +36.1]* |
+| Qwen + cite - Qwen | -19.0 [-29.4, -8.6]* |
+| Sonnet + cite - Sonnet | +4.8 [+0.8, +8.5]* |
+| Opus + cite - Opus | +4.5 [+0.7, +8.6]* |
+| Opus - Sonnet | +4.1 [-0.5, +9.0] |
+
+Reading: the citation effect holds against A, B and the adjudicated set. LLMs over
+rules holds against A and the adjudicated set but not against B alone; because the
+adjudication mostly kept A's values, that claim stays secondary.
