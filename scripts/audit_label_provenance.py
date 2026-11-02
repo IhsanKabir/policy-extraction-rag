@@ -102,7 +102,11 @@ PAIRED_SAMPLES = 2000
 
 def paired_delta(gold: list[dict], base_path: Path, comp_path: Path) -> dict:
     """Comparison minus baseline (micro F1/P/R) with a paired bootstrap 95% CI."""
-    base_pred, comp_pred = E.load_pred(base_path), E.load_pred(comp_path)
+    return paired_delta_preds(gold, E.load_pred(base_path), E.load_pred(comp_path))
+
+
+def paired_delta_preds(gold: list[dict], base_pred: dict, comp_pred: dict) -> dict:
+    """paired_delta on predictions already loaded (record_id -> row)."""
     base = [E._record_counts(g, base_pred.get(g["record_id"])) for g in gold]
     comp = [E._record_counts(g, comp_pred.get(g["record_id"])) for g in gold]
     keys = ("micro_f1", "micro_precision", "micro_recall")

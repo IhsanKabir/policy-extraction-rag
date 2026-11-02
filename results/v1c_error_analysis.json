@@ -1,0 +1,435 @@
+{
+  "method": "Opus 5.5 + cite + guide",
+  "n_records": 132,
+  "fields": {
+    "policy_topic": {
+      "correct": 115,
+      "wrong": 16,
+      "missed": 1
+    },
+    "action": {
+      "correct": 105,
+      "wrong": 26,
+      "missed": 1
+    },
+    "penalty_type": {
+      "correct": 36,
+      "missed": 4,
+      "spurious": 10,
+      "wrong": 4
+    },
+    "before_after_departure": {
+      "spurious": 18,
+      "correct": 16,
+      "missed": 1,
+      "wrong": 5
+    },
+    "fare_difference_required": {
+      "correct": 14,
+      "missed": 1
+    },
+    "penalty_amount": {
+      "correct": 4,
+      "spurious": 2
+    },
+    "penalty_percent": {
+      "correct": 1
+    },
+    "penalty_currency": {
+      "spurious": 8,
+      "correct": 3,
+      "wrong": 1
+    },
+    "time_window": {
+      "spurious": 9,
+      "correct": 18,
+      "wrong": 1
+    },
+    "tax_refund_rule": {
+      "wrong": 2,
+      "correct": 2,
+      "missed": 2
+    },
+    "eligibility_conditions": {
+      "wrong": 16,
+      "spurious": 7,
+      "correct": 31,
+      "missed": 15
+    },
+    "exceptions": {
+      "spurious": 5,
+      "correct": 2,
+      "missed": 1
+    }
+  },
+  "by_genre": {
+    "fare_rule": {
+      "policy_topic": {
+        "correct": 77,
+        "wrong": 10,
+        "missed": 1
+      },
+      "action": {
+        "correct": 77,
+        "wrong": 11
+      },
+      "penalty_type": {
+        "correct": 27,
+        "missed": 3,
+        "spurious": 10,
+        "wrong": 4
+      },
+      "before_after_departure": {
+        "spurious": 11,
+        "correct": 14,
+        "missed": 1,
+        "wrong": 4
+      },
+      "fare_difference_required": {
+        "correct": 14,
+        "missed": 1
+      },
+      "penalty_amount": {
+        "correct": 4,
+        "spurious": 2
+      },
+      "penalty_percent": {
+        "correct": 1
+      },
+      "penalty_currency": {
+        "spurious": 8,
+        "correct": 3,
+        "wrong": 1
+      },
+      "time_window": {
+        "spurious": 8,
+        "correct": 16
+      },
+      "tax_refund_rule": {
+        "wrong": 2,
+        "correct": 1,
+        "missed": 2
+      },
+      "eligibility_conditions": {
+        "wrong": 11,
+        "spurious": 7,
+        "correct": 15,
+        "missed": 4
+      },
+      "exceptions": {
+        "spurious": 3,
+        "correct": 2,
+        "missed": 1
+      }
+    },
+    "policy_text": {
+      "policy_topic": {
+        "correct": 38,
+        "wrong": 6
+      },
+      "action": {
+        "wrong": 15,
+        "correct": 28,
+        "missed": 1
+      },
+      "penalty_type": {
+        "correct": 9,
+        "missed": 1
+      },
+      "before_after_departure": {
+        "spurious": 7,
+        "correct": 2,
+        "wrong": 1
+      },
+      "fare_difference_required": {},
+      "penalty_amount": {},
+      "penalty_percent": {},
+      "penalty_currency": {},
+      "time_window": {
+        "wrong": 1,
+        "correct": 2,
+        "spurious": 1
+      },
+      "tax_refund_rule": {
+        "correct": 1
+      },
+      "eligibility_conditions": {
+        "wrong": 5,
+        "missed": 11,
+        "correct": 16
+      },
+      "exceptions": {
+        "spurious": 2
+      }
+    }
+  },
+  "topic_confusion": {
+    "reissue_change -> other": 5,
+    "reissue_change -> refund": 2,
+    "refund -> other": 2,
+    "refund -> waiver": 1,
+    "cancellation -> refund": 1,
+    "no_show -> refund": 1,
+    "reissue_change -> (empty)": 1,
+    "no_show -> reissue_change": 1,
+    "other -> cancellation": 1,
+    "refund -> cancellation": 1,
+    "refund -> reissue_change": 1
+  },
+  "action_confusion": {
+    "conditional -> unknown": 17,
+    "allowed -> unknown": 3,
+    "not_allowed -> unknown": 3,
+    "conditional -> not_allowed": 2,
+    "conditional -> allowed": 1,
+    "not_allowed -> (empty)": 1
+  },
+  "penalty_type_confusion": {
+    "forfeiture -> (empty)": 2,
+    "percentage -> mixed": 2,
+    "unknown -> fixed_amount": 2,
+    "unknown -> (empty)": 1,
+    "free -> (empty)": 1
+  },
+  "citation_gate": {
+    "Qwen 7B + cite": {
+      "total": {
+        "cost: right value removed": 110,
+        "benefit: wrong value removed": 53,
+        "benefit: spurious value removed": 54
+      },
+      "by_field": {
+        "policy_topic": {
+          "cost: right value removed": 31,
+          "benefit: wrong value removed": 6
+        },
+        "action": {
+          "benefit: wrong value removed": 18,
+          "cost: right value removed": 26
+        },
+        "penalty_type": {
+          "cost: right value removed": 5,
+          "benefit: spurious value removed": 1,
+          "benefit: wrong value removed": 3
+        },
+        "before_after_departure": {
+          "benefit: spurious value removed": 23,
+          "cost: right value removed": 11,
+          "benefit: wrong value removed": 1
+        },
+        "fare_difference_required": {
+          "cost: right value removed": 7
+        },
+        "penalty_currency": {
+          "benefit: spurious value removed": 3,
+          "cost: right value removed": 2
+        },
+        "time_window": {
+          "cost: right value removed": 6,
+          "benefit: spurious value removed": 2
+        },
+        "eligibility_conditions": {
+          "benefit: wrong value removed": 23,
+          "benefit: spurious value removed": 24,
+          "cost: right value removed": 22
+        },
+        "exceptions": {
+          "benefit: spurious value removed": 1,
+          "benefit: wrong value removed": 2
+        }
+      },
+      "gated_f1": 0.2562396006655574,
+      "ungated_f1": 0.4426666666666666,
+      "gate_delta": {
+        "delta": -0.1864270660011092,
+        "ci95": [
+          -0.2375073486184598,
+          -0.1359649122807018
+        ]
+      }
+    },
+    "Qwen 7B + cite + guide": {
+      "total": {
+        "cost: right value removed": 74,
+        "benefit: wrong value removed": 34,
+        "benefit: spurious value removed": 37
+      },
+      "by_field": {
+        "policy_topic": {
+          "cost: right value removed": 18,
+          "benefit: wrong value removed": 5
+        },
+        "action": {
+          "cost: right value removed": 21,
+          "benefit: wrong value removed": 11
+        },
+        "penalty_type": {
+          "benefit: wrong value removed": 5,
+          "cost: right value removed": 5,
+          "benefit: spurious value removed": 2
+        },
+        "before_after_departure": {
+          "benefit: spurious value removed": 21,
+          "cost: right value removed": 7,
+          "benefit: wrong value removed": 2
+        },
+        "penalty_currency": {
+          "cost: right value removed": 2,
+          "benefit: spurious value removed": 1
+        },
+        "time_window": {
+          "cost: right value removed": 5,
+          "benefit: spurious value removed": 1
+        },
+        "eligibility_conditions": {
+          "benefit: wrong value removed": 10,
+          "benefit: spurious value removed": 10,
+          "cost: right value removed": 16
+        },
+        "exceptions": {
+          "benefit: spurious value removed": 2,
+          "benefit: wrong value removed": 1
+        }
+      },
+      "gated_f1": 0.3577235772357723,
+      "ungated_f1": 0.46685082872928174,
+      "gate_delta": {
+        "delta": -0.10912725149350944,
+        "ci95": [
+          -0.15706297345462938,
+          -0.06636429406199568
+        ]
+      }
+    },
+    "Sonnet 5.5 + cite": {
+      "total": {
+        "cost: right value removed": 37,
+        "benefit: spurious value removed": 24,
+        "benefit: wrong value removed": 16
+      },
+      "by_field": {
+        "policy_topic": {
+          "cost: right value removed": 3
+        },
+        "before_after_departure": {
+          "benefit: spurious value removed": 4
+        },
+        "penalty_currency": {
+          "cost: right value removed": 1
+        },
+        "eligibility_conditions": {
+          "benefit: wrong value removed": 16,
+          "benefit: spurious value removed": 15,
+          "cost: right value removed": 31
+        },
+        "exceptions": {
+          "benefit: spurious value removed": 5,
+          "cost: right value removed": 2
+        }
+      },
+      "gated_f1": 0.6762936221419976,
+      "ungated_f1": 0.6793802145411203,
+      "gate_delta": {
+        "delta": -0.0030865923991226785,
+        "ci95": [
+          -0.010474206888224868,
+          0.003246349270985216
+        ]
+      }
+    },
+    "Sonnet 5.5 + cite + ctx": {
+      "total": {
+        "cost: right value removed": 34,
+        "benefit: spurious value removed": 28,
+        "benefit: wrong value removed": 16
+      },
+      "by_field": {
+        "policy_topic": {
+          "cost: right value removed": 1
+        },
+        "before_after_departure": {
+          "benefit: spurious value removed": 3
+        },
+        "penalty_currency": {
+          "cost: right value removed": 1
+        },
+        "eligibility_conditions": {
+          "benefit: wrong value removed": 15,
+          "benefit: spurious value removed": 20,
+          "cost: right value removed": 30
+        },
+        "exceptions": {
+          "benefit: spurious value removed": 5,
+          "cost: right value removed": 2,
+          "benefit: wrong value removed": 1
+        }
+      },
+      "gated_f1": 0.7047841306884481,
+      "ungated_f1": 0.7053364269141532,
+      "gate_delta": {
+        "delta": -0.0005522962257050734,
+        "ci95": [
+          -0.006066712626610848,
+          0.004090567996524297
+        ]
+      }
+    },
+    "Opus 5.5 + cite": {
+      "total": {
+        "benefit: wrong value removed": 19,
+        "benefit: spurious value removed": 38,
+        "cost: right value removed": 37
+      },
+      "by_field": {
+        "eligibility_conditions": {
+          "benefit: wrong value removed": 19,
+          "benefit: spurious value removed": 31,
+          "cost: right value removed": 35
+        },
+        "exceptions": {
+          "benefit: spurious value removed": 7,
+          "cost: right value removed": 2
+        }
+      },
+      "gated_f1": 0.6970684039087949,
+      "ungated_f1": 0.6948968512486429,
+      "gate_delta": {
+        "delta": 0.0021715526601520097,
+        "ci95": [
+          0.0,
+          0.006772009029345494
+        ]
+      }
+    },
+    "Opus 5.5 + cite + guide": {
+      "total": {
+        "benefit: wrong value removed": 17,
+        "benefit: spurious value removed": 12,
+        "cost: right value removed": 33
+      },
+      "by_field": {
+        "action": {
+          "benefit: wrong value removed": 1
+        },
+        "eligibility_conditions": {
+          "benefit: wrong value removed": 16,
+          "benefit: spurious value removed": 7,
+          "cost: right value removed": 31
+        },
+        "exceptions": {
+          "benefit: spurious value removed": 5,
+          "cost: right value removed": 2
+        }
+      },
+      "gated_f1": 0.7535287730727471,
+      "ungated_f1": 0.7527114967462039,
+      "gate_delta": {
+        "delta": 0.0008172763265432703,
+        "ci95": [
+          0.0,
+          0.0025881814017406635
+        ]
+      }
+    }
+  }
+}
