@@ -60,13 +60,14 @@ def main() -> int:
     ap.add_argument("--labels-db", type=Path, default=Path("data/labeling_fine.db"))
     ap.add_argument("--queue", type=Path, default=Path("data/real_pilot_manual_labeling_queue_v1c.jsonl"))
     ap.add_argument("--out", type=Path, default=Path("results/v1c_variance.json"))
+    ap.add_argument("--models", nargs="+", default=list(MODELS), choices=MODELS)
     args = ap.parse_args()
-    missing = [str(p) for m in MODELS for c in (False, True) for p in run_paths(m, c) if not p.exists()]
+    missing = [str(p) for m in args.models for c in (False, True) for p in run_paths(m, c) if not p.exists()]
     if missing:
         print(f"error: missing runs: {missing}", file=sys.stderr)
         return 1
     gold = E.dedup(E.load_gold(args.labels_db, E.load_queue(args.queue)))
-    report = {"n_records": len(gold), "models": {m: model_report(gold, m) for m in MODELS}}
+    report = {"n_records": len(gold), "models": {m: model_report(gold, m) for m in args.models}}
     args.out.write_text(json.dumps(report, indent=2), encoding="utf-8")
 
     pct = lambda d: f"{100 * d['mean']:5.1f} sd {100 * d['sd']:.1f} [{100 * d['min']:.1f}, {100 * d['max']:.1f}]"  # noqa: E731

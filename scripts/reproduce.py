@@ -86,7 +86,8 @@ def commands(snapshots: dict[str, Path]) -> list[list[str]]:
                     "--out", "results/v1c_self_relabel.json"],
              iaa + ["--b-db", "data/labeling_relabel_a.db", "--iaa-queue", "data/queue_relabel_a_unseen.jsonl",
                     "--out", "results/v1c_self_relabel_unseen.json"],
-             py + [s("error_analysis.py"), "--examples", "handoff/error_examples.md"]]
+             py + [s("error_analysis.py"), "--examples", "handoff/error_examples.md"],
+             py + [s("variance_analysis.py")]]
     return cmds
 
 

@@ -34,6 +34,7 @@ REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO))
 from evals import v1b_eval as E  # noqa: E402
 from scripts.audit_label_provenance import METHODS  # noqa: E402
+from scripts.variance_analysis import MODELS, run_paths  # noqa: E402
 
 QUEUE = Path("data/real_pilot_manual_labeling_queue_v1c.jsonl")
 QUEUE_KEYS = ("record_id", "source_id", "document_id", "document_type", "carrier",
@@ -62,7 +63,9 @@ EVAL_RUNS = {
         "sonnet55", "cited_sonnet55", "cited_ctx_sonnet55",
         "opus55", "cited_opus55", "guided_opus55", "cited_ctx_opus55", "cited_guided_opus55")},
 }
-PREDICTION_FILES = sorted({p for _, p in EVAL_RUNS.values()} | set(METHODS.values()))
+# Repeat runs of the Claude conditions, for the run-to-run variance analysis.
+VARIANCE_RUNS = {str(p.as_posix()) for m in MODELS for c in (False, True) for p in run_paths(m, c)}
+PREDICTION_FILES = sorted({p for _, p in EVAL_RUNS.values()} | set(METHODS.values()) | VARIANCE_RUNS)
 
 
 def write_jsonl(path: Path, rows: list[dict]) -> None:
