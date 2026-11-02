@@ -73,7 +73,11 @@ def test_parse_other_validates_and_types_values():
     assert parse_other("penalty_currency", "thb", "w", errors) == "THB"
     assert parse_other("exceptions", "groups\nreward tickets", "w", errors) == ["groups", "reward tickets"]
     assert parse_other("action", "", "w", errors) is None
+    assert parse_other("time_window", "Within 24 Hrs", "w", errors) == "24 hours"
+    assert parse_other("time_window", "8 - 30 Days", "w", errors) == "8-30 days"
     assert errors == []
+    parse_other("time_window", "should be 24 hours from the booking time", "w", errors)
+    assert len(errors) == 1
     parse_other("policy_topic", "refunds", "w", errors)
     assert errors
 

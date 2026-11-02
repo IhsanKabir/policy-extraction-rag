@@ -257,6 +257,13 @@ def parse_other(field: str, value, where: str, errors: list[str]):
         return _number(text, field, errors, where)
     if field in E.CURRENCY:
         return text.upper()
+    if field in E.TIME:
+        norm = E.normalize_time_window(text)
+        if not E._DURATION.search(norm) or E._DURATION.sub("", norm).strip(" -"):
+            errors.append(f"{where}: time window '{text}' must be only a duration like '24 hours' or "
+                          f"'8-30 days' (guide R37); put any explanation in Notes")
+            return None
+        return norm
     return _lines(text) if field in LIST_FIELDS else text
 
 
