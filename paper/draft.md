@@ -28,12 +28,13 @@ This is a pilot: the scored set is small (132 records after near-duplicate remov
 
 ## 2. Related work
 
-TODO (author): short paragraphs, with citations to check, on
-(a) information extraction from contracts and policies (e.g. CUAD, ContractNLI, privacy-policy extraction such as OPP-115);
-(b) attribution and citation in LLM outputs (attributed QA, quote-based grounding, verifiability of generated citations);
-(c) LLM structured extraction and schema-constrained output;
-(d) airline revenue management and fare-rule automation (ATPCO categories, NDC), where we know of no public extraction benchmark (verify).
-Keep claims of "first" out unless verified.
+**Extraction from contracts and policies.** Legal and policy text has established extraction benchmarks: CUAD labels 41 clause categories in 510 commercial contracts, annotated by trained law students (Hendrycks et al., 2021), and OPP-115 annotates data practices in 115 website privacy policies (Wilson et al., 2016). Both show that expert-defined schemas and careful annotation, not model choice alone, determine what can be measured. Airline conditions are closer to policy text than to contracts, but carry typed values (fees, currencies, percentages, time windows) that span annotation does not capture; we label typed fields instead.
+
+**Structured extraction with LLMs.** Large language models extract schema-shaped records from technical text with little or no task-specific training (Dagdelen et al., 2024, for materials chemistry). We use prompted frontier and open models without fine-tuning and score typed fields against human labels.
+
+**Attribution and citation.** Rashkin et al. (2023) define attribution to identified sources (AIS) as a standard for checking generated statements against evidence, and ALCE benchmarks LLMs that generate text with citations, finding that even strong models leave many statements unsupported (Gao et al., 2023). These works evaluate citations produced alongside free-text answers. We study a narrower setting, verbatim quotes for structured fields checked mechanically against the source clause, and separate the effect of asking for evidence from the effect of enforcing it.
+
+**Language technology for aviation text.** Aviation NLP has concentrated on operational messages: NOTAMs have been processed with self-supervised language models for criticality prediction, entity recognition and structured translation (Arnold et al., 2022), and recent work parses them with LLMs into structured, knowledge-grounded outputs (Liu et al., 2025; Liu et al., 2026). LLM agents have also been used to explain and resolve air traffic conflicts in simulation (Andriuskevicius and Sun, 2024). We did not find a public benchmark for extracting airline commercial conditions such as refund and change rules; this work targets that gap, on the passenger and agent side of aviation rather than the operational side.
 
 ## 3. Data
 
@@ -175,3 +176,16 @@ Code and scripts: https://github.com/IhsanKabir/policy-extraction-rag. The `rele
 **Data statement.** The clauses come from pages airlines publish so that passengers can read the conditions before buying. Copyright in the text remains with the carriers. We release the labels, source URLs, snapshot dates and clause text for research use, with attribution, and will remove any carrier's text on request. Code is released under MIT and the annotations under CC BY 4.0; the clause text is not covered by either licence.
 
 **Use of AI assistance.** Claude (Anthropic) was used to write analysis code, to draft consistency fixes to the gold labels that the annotator then approved or rejected (Section 3.4), and to draft this paper. All labels were made or approved by human annotators, the second annotation and adjudication used no AI tools, and every reported number comes from committed scripts.
+
+## References
+
+- Andriuskevicius, J., and Sun, J. (2024). Automatic control with human-like reasoning: exploring language model embodied air traffic agents. arXiv:2409.09717.
+- Arnold, A., Ernez, F., Kobus, C., and Martin, M.-C. (2022). Knowledge extraction from aeronautical messages (NOTAMs) with self-supervised language models for aircraft pilots. NAACL 2022 Industry Track, 188-196.
+- Dagdelen, J., Dunn, A., Lee, S., Walker, N., Rosen, A. S., Ceder, G., Persson, K. A., and Jain, A. (2024). Structured information extraction from scientific text with large language models. Nature Communications, 15, 1418.
+- Gao, T., Yen, H., Yu, J., and Chen, D. (2023). Enabling large language models to generate text with citations. EMNLP 2023.
+- Hendrycks, D., Burns, C., Chen, A., and Ball, S. (2021). CUAD: an expert-annotated NLP dataset for legal contract review. NeurIPS 2021 Datasets and Benchmarks Track.
+- Liu, M., Fang, Q., Yang, Y., Zhao, C., and Cai, K. (2025). Knots: a large-scale multi-agent enhanced expert-annotated dataset and LLM prompt optimization for NOTAM semantic parsing. arXiv:2511.12630.
+- Liu, M., Fang, Q., Wu, Y., Zhao, C., Yang, Y., and Cai, K. (2026). NOTAM-Evolve: a knowledge-guided self-evolving optimization framework with LLMs for NOTAM interpretation. AAAI 2026.
+- Rashkin, H., et al. (2023). Measuring attribution in natural language generation models. Computational Linguistics, 49(4), 777-840.
+- Wilson, S., et al. (2016). The creation and analysis of a website privacy policy corpus. ACL 2016.
+
