@@ -284,7 +284,7 @@ def read_decisions(workbook: Path, expected: list[dict],
     errors: list[str] = []
     decisions = []
     n_ro = len(read_only_values(0, expected[0])) if expected else 0
-    for r, (row, exp) in enumerate(zip(got, expected), FIRST_ROW):
+    for r, (row, exp) in enumerate(zip(got, expected, strict=True), FIRST_ROW):
         where = f"row {r} ({exp['q']['record_id']} {exp['field']})"
         if [str(v) if v is not None else None for v in row[1:n_ro]] != \
                 [str(v) if v is not None else None for v in read_only_values(0, exp)[1:]]:

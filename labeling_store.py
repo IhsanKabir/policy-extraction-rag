@@ -1,17 +1,25 @@
 import json
 import sqlite3
+from contextlib import contextmanager
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, Iterator, List
 
 
-def _connect(db_path: Path) -> sqlite3.Connection:
+@contextmanager
+def _connect(db_path: Path) -> Iterator[sqlite3.Connection]:
+    """Connection that commits (or rolls back) and is then closed, so the file
+    is not left open (on Windows an open handle blocks deleting the database)."""
     db_path.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(str(db_path), timeout=30.0)
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA journal_mode=WAL;")
-    conn.execute("PRAGMA busy_timeout=5000;")
-    conn.execute("PRAGMA synchronous=NORMAL;")
-    return conn
+    try:
+        conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA journal_mode=WAL;")
+        conn.execute("PRAGMA busy_timeout=5000;")
+        conn.execute("PRAGMA synchronous=NORMAL;")
+        with conn:
+            yield conn
+    finally:
+        conn.close()
 
 
 def ensure_manual_label_db(db_path: Path) -> None:

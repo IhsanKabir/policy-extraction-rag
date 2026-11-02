@@ -22,7 +22,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from evals import v1b_eval as E  # noqa: E402
-from scripts.audit_label_provenance import METHODS, PAIRED, paired_delta, paired_delta_preds  # noqa: E402
+from scripts.audit_label_provenance import (  # noqa: E402
+    METHODS,
+    PAIRED,
+    paired_delta,
+    paired_delta_preds,
+)
 from scripts.error_analysis import ungated  # noqa: E402
 
 # The audit's pairs, plus the best system against the rule-based baseline.
@@ -47,7 +52,7 @@ def cohen_kappa(a: list, b: list) -> float | None:
     if not a or len(a) != len(b):
         return None
     n = len(a)
-    observed = sum(x == y for x, y in zip(a, b)) / n
+    observed = sum(x == y for x, y in zip(a, b, strict=True)) / n
     ca, cb = collections.Counter(a), collections.Counter(b)
     expected = sum(ca[k] * cb[k] for k in ca.keys() | cb.keys()) / (n * n)
     if expected == 1:
@@ -102,7 +107,7 @@ def main() -> int:
     skip_b = [st_b.get(rid) == "skip" for rid in done]
     report = {
         "n_sampled": len(sample), "n_done_by_b": len(done),
-        "skip_agreement": (sum(x == y for x, y in zip(skip_a, skip_b)) / len(done)) if done else None,
+        "skip_agreement": (sum(x == y for x, y in zip(skip_a, skip_b, strict=True)) / len(done)) if done else None,
         "skip_kappa": cohen_kappa(skip_a, skip_b),
         **agreement(gold_a, gold_b),
         "methods": {m: {"vs_A": E.score(on_both_a, E.load_pred(Path(p)))["micro_f1"],

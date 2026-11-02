@@ -1,11 +1,20 @@
 import json
 import sqlite3
 
-from openpyxl import load_workbook
-
 from labeling_store import sqlite_upsert_manual_label
-from scripts.adjudication_sheet import (COLUMNS, DECISION, FIRST_ROW, GAP_ID, adjudicate, build, disagreements,
-                                        import_workbook, parse_other, parse_rules)
+from openpyxl import load_workbook
+from scripts.adjudication_sheet import (
+    COLUMNS,
+    DECISION,
+    FIRST_ROW,
+    GAP_ID,
+    adjudicate,
+    build,
+    disagreements,
+    import_workbook,
+    parse_other,
+    parse_rules,
+)
 
 GUIDE = """# Guide
 ## Golden rules
