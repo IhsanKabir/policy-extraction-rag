@@ -26,10 +26,20 @@ run again with the gate off (the model's raw values from the same run) separates
   removed vs 29 wrong or spurious ones).
 - For Qwen 7B the prompt is neutral and **the gate does all the damage**: it removed
   110 right values against 107 wrong or spurious ones, and right values weigh more in F1.
-- Why Qwen fails the gate: for 211 of its 303 asserted values it gave **no quote at
-  all**; only 6 quotes were not found in the clause. This is a failure to follow the
-  output format, not invented quotes. (Sonnet: 76 of 395 without a quote; Opus: 94 of
-  477, nearly all eligibility list items.)
+- Why values fail the gate (asserted values on the 132 records; corrected 2026-11-02,
+  an earlier version of this note mis-split these counts):
+
+  | Model | Grounded | Field left uncited | Quote as a list | Quote not in clause | Quote found, value not in it |
+  |---|---|---|---|---|---|
+  | Qwen 7B | 86 | 159 | 10 | 6 | 42 |
+  | Sonnet 5.5 | 318 | 7 | 0 | 0 | 70 |
+  | Opus 5.5 | 383 | 0 | 0 | 0 | 94 |
+
+  Qwen returns the citations object but leaves over half its values (159 of 303)
+  without a quote: a failure to follow the output instructions, not invented quotes
+  (only 6 quotes are absent from the clause). Sonnet and Opus quote nearly every
+  value; what the gate removes for them are values, mostly paraphrased eligibility
+  items, that do not appear word for word in their own quote.
 
 Implication for the paper: the claim should be "asking strong models to cite evidence
 improves extraction; a strict verbatim-grounding gate costs them almost nothing but
