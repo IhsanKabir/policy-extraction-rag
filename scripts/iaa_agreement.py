@@ -22,10 +22,24 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from evals import v1b_eval as E  # noqa: E402
-from scripts.audit_label_provenance import METHODS, PAIRED, paired_delta  # noqa: E402
+from scripts.audit_label_provenance import METHODS, PAIRED, paired_delta, paired_delta_preds  # noqa: E402
+from scripts.error_analysis import ungated  # noqa: E402
 
 # The audit's pairs, plus the best system against the rule-based baseline.
 IAA_PAIRED = PAIRED + [("Rule-based", "Opus 5.5 + cite + guide")]
+# (plain run, cited run): citation prompt = cited with gate off - plain; gate = gate on - gate off
+CITE_ABLATION = [("Qwen 7B", "Qwen 7B + cite"), ("Sonnet 5.5", "Sonnet 5.5 + cite"),
+                 ("Opus 5.5", "Opus 5.5 + cite"), ("Opus 5.5 + guide", "Opus 5.5 + cite + guide")]
+
+
+def cite_ablation(gold: list[dict]) -> dict:
+    out = {}
+    for plain, cited in CITE_ABLATION:
+        base, gated = E.load_pred(Path(METHODS[plain])), E.load_pred(Path(METHODS[cited]))
+        raw = ungated(gated)
+        out[cited] = {"prompt": paired_delta_preds(gold, base, raw)["micro_f1"],
+                      "gate": paired_delta_preds(gold, raw, gated)["micro_f1"]}
+    return out
 
 
 def cohen_kappa(a: list, b: list) -> float | None:
@@ -98,6 +112,7 @@ def main() -> int:
                     "vs_A": paired_delta(on_both_a, Path(METHODS[b]), Path(METHODS[c]))["micro_f1"],
                     "vs_B": paired_delta(on_both_b, Path(METHODS[b]), Path(METHODS[c]))["micro_f1"]}
                    for b, c in IAA_PAIRED],
+        "cite_ablation": {"vs_A": cite_ablation(on_both_a), "vs_B": cite_ablation(on_both_b)},
     }
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(report, indent=2), encoding="utf-8")
@@ -117,6 +132,15 @@ def main() -> int:
             star = "*" if lo > 0 or hi < 0 else " "
             cells.append(f"{side} {100*d:+5.1f} [{100*lo:+5.1f},{100*hi:+5.1f}]{star}")
         print(f"  {p['comp']:24s} - {p['base']:22s} " + "  ".join(cells))
+    print("citation prompt vs gate (micro-F1 delta, 95% CI)")
+    for cited in report["cite_ablation"]["vs_A"]:
+        cells = []
+        for side in ("vs_A", "vs_B"):
+            for part in ("prompt", "gate"):
+                d, (lo, hi) = (report["cite_ablation"][side][cited][part][k] for k in ("delta", "ci95"))
+                star = "*" if lo > 0 or hi < 0 else " "
+                cells.append(f"{side} {part} {100*d:+5.1f} [{100*lo:+5.1f},{100*hi:+5.1f}]{star}")
+        print(f"  {cited:24s} " + "  ".join(cells))
     return 0
 
 

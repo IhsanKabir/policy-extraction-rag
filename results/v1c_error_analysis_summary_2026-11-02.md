@@ -82,3 +82,20 @@ fields (currency, before/after, time window); policy text fails mainly on action
   (Claude-assisted fixes, A vs B kappa 0.44-0.51).
 - The gate ablation uses each run's own raw values, so it isolates the gate exactly;
   the prompt comparison is between separate runs.
+
+## 3. The prompt-vs-gate split against the other label sets
+
+Same ablation on the 42 IAA records both annotators labelled (`scripts/iaa_agreement.py`,
+`cite_ablation` in `results/v1c_iaa.json` and `results/v1c_iaa_adjudicated.json`):
+
+| Cited run | Prompt vs A | Prompt vs B | Prompt vs adjudicated | Gate (all three) |
+|---|---|---|---|---|
+| Qwen 7B + cite | -0.8 | -2.0 | -0.8 | **-19.1 / -13.0 / -18.3** |
+| Sonnet 5.5 + cite | **+4.7** | **+5.3** | **+4.9** | -0.2 / -0.4 / -0.2 |
+| Opus 5.5 + cite | **+5.7** | **+5.9** | **+4.5** | 0.0 |
+| Opus 5.5 + cite + guide | +2.8 | +0.9 | +2.8 | 0.0 |
+
+Bold = 95% CI excludes 0. The split holds against every label set: the citation prompt
+helps Sonnet and Opus, the gate is free for them and costly for Qwen 7B. On top of the
+guide prompt the citation prompt adds little on this 42-record subset (it was
++2.8 [+0.4, +5.4] on the full 132).
