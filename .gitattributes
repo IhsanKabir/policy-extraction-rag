@@ -1,0 +1,2 @@
+# Keep release files byte-exact so SHA256SUMS matches on every platform
+release/** -text

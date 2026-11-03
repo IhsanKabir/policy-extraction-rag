@@ -330,3 +330,26 @@ def test_chunk_context_omitted_when_identical_to_clause(tmp_path):
     assert "SURROUNDING CONTEXT" not in seen["user"]
     rec = json.loads(out_path.read_text(encoding="utf-8").splitlines()[0])
     assert rec["with_chunk_context"] is False
+
+
+def test_guidelines_condition_appends_only_when_given():
+    from extractors.llm_pipeline import build_prompt
+    base = build_prompt("Refund/Cancellation: Not Available", "VZ", "fare_rule", True)
+    same = build_prompt("Refund/Cancellation: Not Available", "VZ", "fare_rule", True, guidelines=None)
+    guided = build_prompt("Refund/Cancellation: Not Available", "VZ", "fare_rule", True,
+                          guidelines="Labelling conventions: X")
+    assert base == same  # earlier runs stay byte-identical
+    assert guided[0]["content"].startswith(base[0]["content"])
+    assert guided[0]["content"].endswith("Labelling conventions: X")
+    assert guided[1] == base[1]
+
+
+def test_parse_takes_final_object_after_self_correction():
+    from extractors.llm_pipeline import parse_model_json
+    reply = ('{"policy_topic": "reissue_change", "action": "allowed"}\n\n'
+             'Correction: a field without a supporting quote must be null.\n\n'
+             '{"policy_topic": "reissue_change", "action": "conditional", "citations": {"action": "x"}}')
+    out = parse_model_json(reply)
+    assert out["action"] == "conditional" and out["citations"] == {"action": "x"}
+    assert parse_model_json('{"a": 1}') == {"a": 1}
+    assert parse_model_json("no json here") is None

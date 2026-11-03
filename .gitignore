@@ -51,3 +51,10 @@ logs/
 # Server logs / editor backups
 *.out
 *.bak
+
+# hand-off files containing source text (IAA workbook)
+handoff/
+
+# Reproduction workspace (scripts/reproduce.py) and local test temp
+build/
+.pytest-tmp/

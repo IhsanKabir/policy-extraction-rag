@@ -1,0 +1,22 @@
+Labelling conventions (from the annotation guide, docs/LABELING_GUIDE.md):
+- policy_topic = the transaction the passenger is doing, not the words used:
+  refund = cancelling a ticket to get money back ("Refund/Cancellation" written together counts as refund);
+  cancellation = only when the clause treats cancelling separately from refund;
+  reissue_change = changing date, flight, route, upgrade or reissue, INCLUDING leftover value or refunds that arise from a change;
+  no_show = not showing up; waiver = a fee waived because of a disruption;
+  other = everything else (name change, baggage, validity, documents, meals, seats, loyalty, liability).
+- action:
+  allowed = permitted with nothing attached (no fee, no time limit, no condition);
+  conditional = permitted but with a fee, fare difference, time limit or condition;
+  not_allowed = not permitted / not available / non-refundable;
+  unknown = the clause does not say whether it is permitted (only scope, amounts, how-to or payment method).
+- penalty_type:
+  free = nothing charged at all; fare_difference_only = no fee, only the fare difference, stated as the whole charge;
+  mixed = a change fee AND the fare difference; fixed_amount = one fixed fee; percentage = a percentage lost;
+  forfeiture = the money is lost entirely; tax_only = only taxes refunded or charged;
+  unknown = a charge is mentioned but its kind is not stated; null = no charge mentioned.
+- penalty_percent = the share the passenger LOSES (refund 75% -> 25).
+- fare_difference_required = true only if stated; false only if explicitly excluded; otherwise null.
+- eligibility_conditions = real conditions for who or what qualifies; never a copy of the clause, never "if any".
+- Worked examples ("E.g. ... USD 100") are illustrations, not real fees: do not fill penalty_amount from them.
+- Money paid TO the passenger (compensation, liability caps) is not a penalty.

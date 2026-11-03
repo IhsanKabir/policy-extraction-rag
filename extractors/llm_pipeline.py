@@ -69,7 +69,8 @@ def _repo_root() -> Path:
 
 
 def build_prompt(clause_text: str, carrier: Optional[str], document_type: str,
-                 cited: bool, chunk_context: Optional[str] = None) -> List[dict]:
+                 cited: bool, chunk_context: Optional[str] = None,
+                 guidelines: Optional[str] = None) -> List[dict]:
     """Build the chat messages for one clause. Kept deterministic (no dates,
     no randomness) so runs are reproducible at temperature 0.
 
@@ -108,6 +109,9 @@ def build_prompt(clause_text: str, carrier: Optional[str], document_type: str,
             "to the exact verbatim quote from the clause text that states that value. "
             "A field without a supporting quote must be null."
         )
+    if guidelines:
+        # optional condition: the annotation guide's conventions, appended verbatim
+        system += "\n\n" + guidelines.strip()
     user = f"Document type: {document_type}. Carrier: {carrier or 'unknown'}.\n"
     if chunk_context:
         user += (
@@ -161,7 +165,23 @@ def parse_model_json(text: str) -> Optional[dict]:
                 out = json.loads(t[start:end + 1])
                 return out if isinstance(out, dict) else None
             except json.JSONDecodeError:
-                return None
+                pass
+        # Several JSON objects with prose between them (a model that answers,
+        # then writes "Correction: ..." and answers again): take the LAST
+        # complete object, i.e. the model's final answer.
+        decoder = json.JSONDecoder()
+        last = None
+        i = t.find("{")
+        while i != -1:
+            try:
+                obj, length = decoder.raw_decode(t, i)
+            except json.JSONDecodeError:
+                i = t.find("{", i + 1)
+                continue
+            if isinstance(obj, dict):
+                last = obj
+            i = t.find("{", i + length)
+        return last
     return None
 
 
@@ -316,6 +336,38 @@ def gold_record_ids(db_path: Path) -> set:
     return set(sqlite_load_manual_label_map(db_path).keys())
 
 
+def build_output_record(row: dict, clause_text: str, reply: str, mode: str,
+                        model: str, context: Optional[str]) -> Optional[dict]:
+    """Turn one model reply into an output record (shared by every backend so
+    Ollama and Claude results are post-processed identically). Returns None
+    when the reply is not parseable JSON."""
+    raw = parse_model_json(reply)
+    if raw is None:
+        return None
+    fields = coerce_fields(raw)
+    record = {
+        # identity copied verbatim from the source clause row
+        "record_id": row.get("record_id"),
+        "source_id": row.get("source_id"),
+        "document_id": row.get("document_id"),
+        "document_type": row.get("document_type"),
+        "carrier": row.get("carrier"),
+        "supplier": row.get("supplier"),
+        "chunk_id": row.get("chunk_id"),
+        "clause_text": clause_text,
+        # extraction provenance
+        "extractor": f"{mode}:{model}",
+        "extraction_mode": mode,
+        "with_chunk_context": bool(context),
+        # pre-coercion model output, kept for coercion-loss auditing
+        "model_raw_fields": raw,
+    }
+    if mode == "llm_cited":
+        record["grounding"] = verify_citations(fields, raw.get("citations"), clause_text)
+    record.update(fields)
+    return record
+
+
 def extract_records(
     clause_rows: List[dict],
     mode: str,
@@ -325,6 +377,7 @@ def extract_records(
     max_records: Optional[int] = None,
     progress_every: int = 5,
     chunk_map: Optional[Dict[str, str]] = None,
+    guidelines: Optional[str] = None,
 ) -> dict:
     """Run LLM extraction over clause rows, appending JSONL to output_path.
     Resumable: rows whose record_id already exists in the output are skipped.
@@ -360,7 +413,7 @@ def extract_records(
                     context = None  # chunk-granularity: context adds nothing
             messages = build_prompt(clause_text, row.get("carrier"),
                                     str(row.get("document_type")), cited,
-                                    chunk_context=context)
+                                    chunk_context=context, guidelines=guidelines)
             try:
                 reply = chat(messages, model)
             except (urllib.error.URLError, OSError, TimeoutError,
@@ -369,34 +422,12 @@ def extract_records(
                 print(f"[{i+1}/{len(todo)}] call failed for "
                       f"{row.get('record_id')}: {exc}", file=sys.stderr)
                 continue
-            raw = parse_model_json(reply)
-            if raw is None:
+            record = build_output_record(row, clause_text, reply, mode, model, context)
+            if record is None:
                 stats["parse_failures"] += 1
                 print(f"[{i+1}/{len(todo)}] unparseable JSON for "
                       f"{row.get('record_id')}", file=sys.stderr)
                 continue
-            fields = coerce_fields(raw)
-            record = {
-                # identity copied verbatim from the source clause row
-                "record_id": row.get("record_id"),
-                "source_id": row.get("source_id"),
-                "document_id": row.get("document_id"),
-                "document_type": row.get("document_type"),
-                "carrier": row.get("carrier"),
-                "supplier": row.get("supplier"),
-                "chunk_id": row.get("chunk_id"),
-                "clause_text": clause_text,
-                # extraction provenance
-                "extractor": f"{mode}:{model}",
-                "extraction_mode": mode,
-                "with_chunk_context": bool(context),
-                # pre-coercion model output, kept for coercion-loss auditing
-                "model_raw_fields": raw,
-            }
-            if cited:
-                record["grounding"] = verify_citations(
-                    fields, raw.get("citations"), clause_text)
-            record.update(fields)
             out.write(json.dumps(record, ensure_ascii=False) + "\n")
             out.flush()
             stats["extracted"] += 1
@@ -426,6 +457,8 @@ def main():
                              "prompt for disambiguation")
     parser.add_argument("--chunks", default=str(_repo_root() / "data" / "chunks.jsonl"),
                         help="Chunks file for --with-chunk-context lookup")
+    parser.add_argument("--guidelines", default=None,
+                        help="Optional text file of annotation conventions appended to the prompt")
     args = parser.parse_args()
 
     rows = _load_jsonl(Path(args.clauses))
@@ -444,7 +477,8 @@ def main():
     stats = extract_records(rows, mode=args.mode, model=args.model,
                             output_path=Path(args.output),
                             max_records=args.max_records,
-                            chunk_map=chunk_map)
+                            chunk_map=chunk_map,
+                            guidelines=Path(args.guidelines).read_text(encoding="utf-8") if args.guidelines else None)
     stats.update({"status": "ok", "mode": args.mode, "model": args.model,
                   "output": args.output,
                   "with_chunk_context": bool(chunk_map)})

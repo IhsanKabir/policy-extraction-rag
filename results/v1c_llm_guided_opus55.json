@@ -1,0 +1,876 @@
+{
+  "method": "llm_guided_opus55",
+  "pred": "data/v1b_llm_guided_opus55.jsonl",
+  "results": {
+    "all": {
+      "fields": {
+        "policy_topic": {
+          "support": 166,
+          "correct": 144,
+          "predicted": 165,
+          "spurious": 0,
+          "precision": 0.8727272727272727,
+          "recall": 0.8674698795180723,
+          "f1": 0.8700906344410876,
+          "soft_score": null
+        },
+        "action": {
+          "support": 166,
+          "correct": 136,
+          "predicted": 166,
+          "spurious": 0,
+          "precision": 0.8192771084337349,
+          "recall": 0.8192771084337349,
+          "f1": 0.819277108433735,
+          "soft_score": null
+        },
+        "penalty_type": {
+          "support": 58,
+          "correct": 48,
+          "predicted": 69,
+          "spurious": 14,
+          "precision": 0.6956521739130435,
+          "recall": 0.8275862068965517,
+          "f1": 0.7559055118110236,
+          "soft_score": null
+        },
+        "before_after_departure": {
+          "support": 28,
+          "correct": 25,
+          "predicted": 86,
+          "spurious": 58,
+          "precision": 0.29069767441860467,
+          "recall": 0.8928571428571429,
+          "f1": 0.43859649122807026,
+          "soft_score": null
+        },
+        "fare_difference_required": {
+          "support": 27,
+          "correct": 26,
+          "predicted": 26,
+          "spurious": 0,
+          "precision": 1.0,
+          "recall": 0.9629629629629629,
+          "f1": 0.9811320754716981,
+          "soft_score": null
+        },
+        "penalty_amount": {
+          "support": 4,
+          "correct": 4,
+          "predicted": 8,
+          "spurious": 4,
+          "precision": 0.5,
+          "recall": 1.0,
+          "f1": 0.6666666666666666,
+          "soft_score": null
+        },
+        "penalty_percent": {
+          "support": 1,
+          "correct": 0,
+          "predicted": 0,
+          "spurious": 0,
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "soft_score": null
+        },
+        "penalty_currency": {
+          "support": 4,
+          "correct": 3,
+          "predicted": 14,
+          "spurious": 10,
+          "precision": 0.21428571428571427,
+          "recall": 0.75,
+          "f1": 0.3333333333333333,
+          "soft_score": null
+        },
+        "time_window": {
+          "support": 25,
+          "correct": 23,
+          "predicted": 39,
+          "spurious": 15,
+          "precision": 0.5897435897435898,
+          "recall": 0.92,
+          "f1": 0.71875,
+          "soft_score": null
+        },
+        "tax_refund_rule": {
+          "support": 6,
+          "correct": 2,
+          "predicted": 4,
+          "spurious": 0,
+          "precision": 0.5,
+          "recall": 0.3333333333333333,
+          "f1": 0.4,
+          "soft_score": 0.35481481481481486
+        },
+        "eligibility_conditions": {
+          "support": 66,
+          "correct": 34,
+          "predicted": 66,
+          "spurious": 15,
+          "precision": 0.5151515151515151,
+          "recall": 0.5151515151515151,
+          "f1": 0.5151515151515151,
+          "soft_score": 0.4433777810806103
+        },
+        "exceptions": {
+          "support": 3,
+          "correct": 2,
+          "predicted": 10,
+          "spurious": 7,
+          "precision": 0.2,
+          "recall": 0.6666666666666666,
+          "f1": 0.30769230769230765,
+          "soft_score": 0.6141414141414141
+        }
+      },
+      "micro_precision": 0.6845329249617151,
+      "micro_recall": 0.8068592057761733,
+      "micro_f1": 0.7406793703396852,
+      "topic_accuracy": 0.8674698795180723,
+      "action_accuracy": 0.8192771084337349,
+      "n_records": 166,
+      "n_missing_predictions": 0,
+      "ci95": {
+        "micro_f1": [
+          0.6997476871320437,
+          0.7753001715265867
+        ],
+        "topic_accuracy": [
+          0.8132530120481928,
+          0.9156626506024096
+        ],
+        "action_accuracy": [
+          0.7590361445783133,
+          0.8734939759036144
+        ]
+      }
+    },
+    "all_dedup": {
+      "fields": {
+        "policy_topic": {
+          "support": 132,
+          "correct": 116,
+          "predicted": 131,
+          "spurious": 0,
+          "precision": 0.8854961832061069,
+          "recall": 0.8787878787878788,
+          "f1": 0.8821292775665399,
+          "soft_score": null
+        },
+        "action": {
+          "support": 132,
+          "correct": 103,
+          "predicted": 132,
+          "spurious": 0,
+          "precision": 0.7803030303030303,
+          "recall": 0.7803030303030303,
+          "f1": 0.7803030303030304,
+          "soft_score": null
+        },
+        "penalty_type": {
+          "support": 44,
+          "correct": 36,
+          "predicted": 52,
+          "spurious": 10,
+          "precision": 0.6923076923076923,
+          "recall": 0.8181818181818182,
+          "f1": 0.7500000000000001,
+          "soft_score": null
+        },
+        "before_after_departure": {
+          "support": 22,
+          "correct": 20,
+          "predicted": 71,
+          "spurious": 49,
+          "precision": 0.28169014084507044,
+          "recall": 0.9090909090909091,
+          "f1": 0.43010752688172044,
+          "soft_score": null
+        },
+        "fare_difference_required": {
+          "support": 15,
+          "correct": 14,
+          "predicted": 14,
+          "spurious": 0,
+          "precision": 1.0,
+          "recall": 0.9333333333333333,
+          "f1": 0.9655172413793104,
+          "soft_score": null
+        },
+        "penalty_amount": {
+          "support": 4,
+          "correct": 4,
+          "predicted": 6,
+          "spurious": 2,
+          "precision": 0.6666666666666666,
+          "recall": 1.0,
+          "f1": 0.8,
+          "soft_score": null
+        },
+        "penalty_percent": {
+          "support": 1,
+          "correct": 0,
+          "predicted": 0,
+          "spurious": 0,
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "soft_score": null
+        },
+        "penalty_currency": {
+          "support": 4,
+          "correct": 3,
+          "predicted": 12,
+          "spurious": 8,
+          "precision": 0.25,
+          "recall": 0.75,
+          "f1": 0.375,
+          "soft_score": null
+        },
+        "time_window": {
+          "support": 19,
+          "correct": 18,
+          "predicted": 32,
+          "spurious": 13,
+          "precision": 0.5625,
+          "recall": 0.9473684210526315,
+          "f1": 0.7058823529411765,
+          "soft_score": null
+        },
+        "tax_refund_rule": {
+          "support": 6,
+          "correct": 2,
+          "predicted": 4,
+          "spurious": 0,
+          "precision": 0.5,
+          "recall": 0.3333333333333333,
+          "f1": 0.4,
+          "soft_score": 0.35481481481481486
+        },
+        "eligibility_conditions": {
+          "support": 62,
+          "correct": 32,
+          "predicted": 59,
+          "spurious": 12,
+          "precision": 0.5423728813559322,
+          "recall": 0.5161290322580645,
+          "f1": 0.5289256198347108,
+          "soft_score": 0.4429505411503271
+        },
+        "exceptions": {
+          "support": 3,
+          "correct": 2,
+          "predicted": 9,
+          "spurious": 6,
+          "precision": 0.2222222222222222,
+          "recall": 0.6666666666666666,
+          "f1": 0.3333333333333333,
+          "soft_score": 0.6141414141414141
+        }
+      },
+      "micro_precision": 0.6704980842911877,
+      "micro_recall": 0.7882882882882883,
+      "micro_f1": 0.7246376811594203,
+      "topic_accuracy": 0.8787878787878788,
+      "action_accuracy": 0.7803030303030303,
+      "n_records": 132,
+      "n_missing_predictions": 0,
+      "ci95": {
+        "micro_f1": [
+          0.6794055201698515,
+          0.7682801235839342
+        ],
+        "topic_accuracy": [
+          0.8181818181818182,
+          0.9318181818181818
+        ],
+        "action_accuracy": [
+          0.7045454545454546,
+          0.8484848484848485
+        ]
+      }
+    },
+    "fare_rule": {
+      "fields": {
+        "policy_topic": {
+          "support": 122,
+          "correct": 105,
+          "predicted": 121,
+          "spurious": 0,
+          "precision": 0.8677685950413223,
+          "recall": 0.860655737704918,
+          "f1": 0.8641975308641975,
+          "soft_score": null
+        },
+        "action": {
+          "support": 122,
+          "correct": 107,
+          "predicted": 122,
+          "spurious": 0,
+          "precision": 0.8770491803278688,
+          "recall": 0.8770491803278688,
+          "f1": 0.8770491803278688,
+          "soft_score": null
+        },
+        "penalty_type": {
+          "support": 48,
+          "correct": 39,
+          "predicted": 60,
+          "spurious": 14,
+          "precision": 0.65,
+          "recall": 0.8125,
+          "f1": 0.7222222222222223,
+          "soft_score": null
+        },
+        "before_after_departure": {
+          "support": 25,
+          "correct": 23,
+          "predicted": 57,
+          "spurious": 32,
+          "precision": 0.40350877192982454,
+          "recall": 0.92,
+          "f1": 0.5609756097560975,
+          "soft_score": null
+        },
+        "fare_difference_required": {
+          "support": 27,
+          "correct": 26,
+          "predicted": 26,
+          "spurious": 0,
+          "precision": 1.0,
+          "recall": 0.9629629629629629,
+          "f1": 0.9811320754716981,
+          "soft_score": null
+        },
+        "penalty_amount": {
+          "support": 4,
+          "correct": 4,
+          "predicted": 8,
+          "spurious": 4,
+          "precision": 0.5,
+          "recall": 1.0,
+          "f1": 0.6666666666666666,
+          "soft_score": null
+        },
+        "penalty_percent": {
+          "support": 1,
+          "correct": 0,
+          "predicted": 0,
+          "spurious": 0,
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "soft_score": null
+        },
+        "penalty_currency": {
+          "support": 4,
+          "correct": 3,
+          "predicted": 14,
+          "spurious": 10,
+          "precision": 0.21428571428571427,
+          "recall": 0.75,
+          "f1": 0.3333333333333333,
+          "soft_score": null
+        },
+        "time_window": {
+          "support": 22,
+          "correct": 21,
+          "predicted": 34,
+          "spurious": 13,
+          "precision": 0.6176470588235294,
+          "recall": 0.9545454545454546,
+          "f1": 0.75,
+          "soft_score": null
+        },
+        "tax_refund_rule": {
+          "support": 5,
+          "correct": 1,
+          "predicted": 3,
+          "spurious": 0,
+          "precision": 0.3333333333333333,
+          "recall": 0.2,
+          "f1": 0.25,
+          "soft_score": 0.248
+        },
+        "eligibility_conditions": {
+          "support": 34,
+          "correct": 17,
+          "predicted": 45,
+          "spurious": 15,
+          "precision": 0.37777777777777777,
+          "recall": 0.5,
+          "f1": 0.43037974683544306,
+          "soft_score": 0.4773601310161136
+        },
+        "exceptions": {
+          "support": 3,
+          "correct": 2,
+          "predicted": 8,
+          "spurious": 5,
+          "precision": 0.25,
+          "recall": 0.6666666666666666,
+          "f1": 0.36363636363636365,
+          "soft_score": 0.6141414141414141
+        }
+      },
+      "micro_precision": 0.6987951807228916,
+      "micro_recall": 0.8345323741007195,
+      "micro_f1": 0.7606557377049181,
+      "topic_accuracy": 0.860655737704918,
+      "action_accuracy": 0.8770491803278688,
+      "n_records": 122,
+      "n_missing_predictions": 0,
+      "ci95": {
+        "micro_f1": [
+          0.7163515016685205,
+          0.8072976054732042
+        ],
+        "topic_accuracy": [
+          0.7950819672131147,
+          0.9180327868852459
+        ],
+        "action_accuracy": [
+          0.819672131147541,
+          0.9344262295081968
+        ]
+      }
+    },
+    "fare_rule_dedup": {
+      "fields": {
+        "policy_topic": {
+          "support": 88,
+          "correct": 77,
+          "predicted": 87,
+          "spurious": 0,
+          "precision": 0.8850574712643678,
+          "recall": 0.875,
+          "f1": 0.8800000000000001,
+          "soft_score": null
+        },
+        "action": {
+          "support": 88,
+          "correct": 74,
+          "predicted": 88,
+          "spurious": 0,
+          "precision": 0.8409090909090909,
+          "recall": 0.8409090909090909,
+          "f1": 0.8409090909090909,
+          "soft_score": null
+        },
+        "penalty_type": {
+          "support": 34,
+          "correct": 27,
+          "predicted": 43,
+          "spurious": 10,
+          "precision": 0.627906976744186,
+          "recall": 0.7941176470588235,
+          "f1": 0.7012987012987012,
+          "soft_score": null
+        },
+        "before_after_departure": {
+          "support": 19,
+          "correct": 18,
+          "predicted": 42,
+          "spurious": 23,
+          "precision": 0.42857142857142855,
+          "recall": 0.9473684210526315,
+          "f1": 0.5901639344262295,
+          "soft_score": null
+        },
+        "fare_difference_required": {
+          "support": 15,
+          "correct": 14,
+          "predicted": 14,
+          "spurious": 0,
+          "precision": 1.0,
+          "recall": 0.9333333333333333,
+          "f1": 0.9655172413793104,
+          "soft_score": null
+        },
+        "penalty_amount": {
+          "support": 4,
+          "correct": 4,
+          "predicted": 6,
+          "spurious": 2,
+          "precision": 0.6666666666666666,
+          "recall": 1.0,
+          "f1": 0.8,
+          "soft_score": null
+        },
+        "penalty_percent": {
+          "support": 1,
+          "correct": 0,
+          "predicted": 0,
+          "spurious": 0,
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "soft_score": null
+        },
+        "penalty_currency": {
+          "support": 4,
+          "correct": 3,
+          "predicted": 12,
+          "spurious": 8,
+          "precision": 0.25,
+          "recall": 0.75,
+          "f1": 0.375,
+          "soft_score": null
+        },
+        "time_window": {
+          "support": 16,
+          "correct": 16,
+          "predicted": 27,
+          "spurious": 11,
+          "precision": 0.5925925925925926,
+          "recall": 1.0,
+          "f1": 0.7441860465116279,
+          "soft_score": null
+        },
+        "tax_refund_rule": {
+          "support": 5,
+          "correct": 1,
+          "predicted": 3,
+          "spurious": 0,
+          "precision": 0.3333333333333333,
+          "recall": 0.2,
+          "f1": 0.25,
+          "soft_score": 0.248
+        },
+        "eligibility_conditions": {
+          "support": 30,
+          "correct": 15,
+          "predicted": 38,
+          "spurious": 12,
+          "precision": 0.39473684210526316,
+          "recall": 0.5,
+          "f1": 0.4411764705882353,
+          "soft_score": 0.4810081484849286
+        },
+        "exceptions": {
+          "support": 3,
+          "correct": 2,
+          "predicted": 7,
+          "spurious": 4,
+          "precision": 0.2857142857142857,
+          "recall": 0.6666666666666666,
+          "f1": 0.4,
+          "soft_score": 0.6141414141414141
+        }
+      },
+      "micro_precision": 0.6839237057220708,
+      "micro_recall": 0.8175895765472313,
+      "micro_f1": 0.7448071216617211,
+      "topic_accuracy": 0.875,
+      "action_accuracy": 0.8409090909090909,
+      "n_records": 88,
+      "n_missing_predictions": 0,
+      "ci95": {
+        "micro_f1": [
+          0.6882352941176471,
+          0.7993874425727412
+        ],
+        "topic_accuracy": [
+          0.8068181818181818,
+          0.9431818181818182
+        ],
+        "action_accuracy": [
+          0.7613636363636364,
+          0.9090909090909091
+        ]
+      }
+    },
+    "policy_text": {
+      "fields": {
+        "policy_topic": {
+          "support": 44,
+          "correct": 39,
+          "predicted": 44,
+          "spurious": 0,
+          "precision": 0.8863636363636364,
+          "recall": 0.8863636363636364,
+          "f1": 0.8863636363636365,
+          "soft_score": null
+        },
+        "action": {
+          "support": 44,
+          "correct": 29,
+          "predicted": 44,
+          "spurious": 0,
+          "precision": 0.6590909090909091,
+          "recall": 0.6590909090909091,
+          "f1": 0.6590909090909091,
+          "soft_score": null
+        },
+        "penalty_type": {
+          "support": 10,
+          "correct": 9,
+          "predicted": 9,
+          "spurious": 0,
+          "precision": 1.0,
+          "recall": 0.9,
+          "f1": 0.9473684210526316,
+          "soft_score": null
+        },
+        "before_after_departure": {
+          "support": 3,
+          "correct": 2,
+          "predicted": 29,
+          "spurious": 26,
+          "precision": 0.06896551724137931,
+          "recall": 0.6666666666666666,
+          "f1": 0.125,
+          "soft_score": null
+        },
+        "fare_difference_required": {
+          "support": 0,
+          "correct": 0,
+          "predicted": 0,
+          "spurious": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null,
+          "soft_score": null
+        },
+        "penalty_amount": {
+          "support": 0,
+          "correct": 0,
+          "predicted": 0,
+          "spurious": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null,
+          "soft_score": null
+        },
+        "penalty_percent": {
+          "support": 0,
+          "correct": 0,
+          "predicted": 0,
+          "spurious": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null,
+          "soft_score": null
+        },
+        "penalty_currency": {
+          "support": 0,
+          "correct": 0,
+          "predicted": 0,
+          "spurious": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null,
+          "soft_score": null
+        },
+        "time_window": {
+          "support": 3,
+          "correct": 2,
+          "predicted": 5,
+          "spurious": 2,
+          "precision": 0.4,
+          "recall": 0.6666666666666666,
+          "f1": 0.5,
+          "soft_score": null
+        },
+        "tax_refund_rule": {
+          "support": 1,
+          "correct": 1,
+          "predicted": 1,
+          "spurious": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "soft_score": 0.888888888888889
+        },
+        "eligibility_conditions": {
+          "support": 32,
+          "correct": 17,
+          "predicted": 21,
+          "spurious": 0,
+          "precision": 0.8095238095238095,
+          "recall": 0.53125,
+          "f1": 0.6415094339622642,
+          "soft_score": 0.4072715342741381
+        },
+        "exceptions": {
+          "support": 0,
+          "correct": 0,
+          "predicted": 2,
+          "spurious": 2,
+          "precision": 0.0,
+          "recall": null,
+          "f1": null,
+          "soft_score": null
+        }
+      },
+      "micro_precision": 0.6387096774193548,
+      "micro_recall": 0.7226277372262774,
+      "micro_f1": 0.6780821917808219,
+      "topic_accuracy": 0.8863636363636364,
+      "action_accuracy": 0.6590909090909091,
+      "n_records": 44,
+      "n_missing_predictions": 0,
+      "ci95": {
+        "micro_f1": [
+          0.6060606060606061,
+          0.743859649122807
+        ],
+        "topic_accuracy": [
+          0.7954545454545454,
+          0.9772727272727273
+        ],
+        "action_accuracy": [
+          0.5,
+          0.7954545454545454
+        ]
+      }
+    },
+    "policy_text_dedup": {
+      "fields": {
+        "policy_topic": {
+          "support": 44,
+          "correct": 39,
+          "predicted": 44,
+          "spurious": 0,
+          "precision": 0.8863636363636364,
+          "recall": 0.8863636363636364,
+          "f1": 0.8863636363636365,
+          "soft_score": null
+        },
+        "action": {
+          "support": 44,
+          "correct": 29,
+          "predicted": 44,
+          "spurious": 0,
+          "precision": 0.6590909090909091,
+          "recall": 0.6590909090909091,
+          "f1": 0.6590909090909091,
+          "soft_score": null
+        },
+        "penalty_type": {
+          "support": 10,
+          "correct": 9,
+          "predicted": 9,
+          "spurious": 0,
+          "precision": 1.0,
+          "recall": 0.9,
+          "f1": 0.9473684210526316,
+          "soft_score": null
+        },
+        "before_after_departure": {
+          "support": 3,
+          "correct": 2,
+          "predicted": 29,
+          "spurious": 26,
+          "precision": 0.06896551724137931,
+          "recall": 0.6666666666666666,
+          "f1": 0.125,
+          "soft_score": null
+        },
+        "fare_difference_required": {
+          "support": 0,
+          "correct": 0,
+          "predicted": 0,
+          "spurious": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null,
+          "soft_score": null
+        },
+        "penalty_amount": {
+          "support": 0,
+          "correct": 0,
+          "predicted": 0,
+          "spurious": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null,
+          "soft_score": null
+        },
+        "penalty_percent": {
+          "support": 0,
+          "correct": 0,
+          "predicted": 0,
+          "spurious": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null,
+          "soft_score": null
+        },
+        "penalty_currency": {
+          "support": 0,
+          "correct": 0,
+          "predicted": 0,
+          "spurious": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null,
+          "soft_score": null
+        },
+        "time_window": {
+          "support": 3,
+          "correct": 2,
+          "predicted": 5,
+          "spurious": 2,
+          "precision": 0.4,
+          "recall": 0.6666666666666666,
+          "f1": 0.5,
+          "soft_score": null
+        },
+        "tax_refund_rule": {
+          "support": 1,
+          "correct": 1,
+          "predicted": 1,
+          "spurious": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "soft_score": 0.888888888888889
+        },
+        "eligibility_conditions": {
+          "support": 32,
+          "correct": 17,
+          "predicted": 21,
+          "spurious": 0,
+          "precision": 0.8095238095238095,
+          "recall": 0.53125,
+          "f1": 0.6415094339622642,
+          "soft_score": 0.4072715342741381
+        },
+        "exceptions": {
+          "support": 0,
+          "correct": 0,
+          "predicted": 2,
+          "spurious": 2,
+          "precision": 0.0,
+          "recall": null,
+          "f1": null,
+          "soft_score": null
+        }
+      },
+      "micro_precision": 0.6387096774193548,
+      "micro_recall": 0.7226277372262774,
+      "micro_f1": 0.6780821917808219,
+      "topic_accuracy": 0.8863636363636364,
+      "action_accuracy": 0.6590909090909091,
+      "n_records": 44,
+      "n_missing_predictions": 0,
+      "ci95": {
+        "micro_f1": [
+          0.6060606060606061,
+          0.743859649122807
+        ],
+        "topic_accuracy": [
+          0.7954545454545454,
+          0.9772727272727273
+        ],
+        "action_accuracy": [
+          0.5,
+          0.7954545454545454
+        ]
+      }
+    }
+  }
+}
