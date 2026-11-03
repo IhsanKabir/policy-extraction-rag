@@ -24,7 +24,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO))
 from labeling_store import ensure_manual_label_db  # noqa: E402
-from scripts.export_release import EVAL_RUNS, LABEL_SETS, SAMPLES, SNAPSHOTS  # noqa: E402
+from scripts.export_release import AUDITS, EVAL_RUNS, LABEL_SETS, SAMPLES, SNAPSHOTS  # noqa: E402
 
 PATH_KEYS = {"pred", "snapshots", "final"}  # file paths recorded in results; differ by design
 TOLERANCE = 1e-9
@@ -69,6 +69,8 @@ def restore(release: Path, ws: Path) -> dict[str, Path]:
     for pred in (release / "predictions").glob("*.jsonl"):
         shutil.copyfile(pred, ws / "data" / pred.name)
     shutil.copyfile(release / "retrieval/runs.jsonl", ws / "data/retrieval_runs.jsonl")
+    for name, path in AUDITS.items():
+        shutil.copyfile(release / "audits" / f"{name}.jsonl", ws / path)
     return snapshots
 
 
@@ -91,7 +93,8 @@ def commands(snapshots: dict[str, Path]) -> list[list[str]]:
              py + [s("variance_analysis.py")],
              py + [s("retrieval_eval.py")],
              py + [s("rule_detection.py")],
-             py + [s("robustness_analysis.py")]]
+             py + [s("robustness_analysis.py")],
+             py + [s("score_audits.py")]]
     return cmds
 
 

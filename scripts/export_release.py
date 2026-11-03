@@ -67,9 +67,11 @@ EVAL_RUNS = {
 # Repeat runs of the Claude conditions, for the run-to-run variance analysis.
 VARIANCE_RUNS = {str(p.as_posix()) for m in MODELS for c in (False, True) for p in run_paths(m, c)}
 RETRIEVAL_RUNS = Path("data/retrieval_runs.jsonl")
-# Claude runs on the 84 clauses A marked as stating no rule, for scripts/rule_detection.py.
+# A's time-window direction labels and citation-audit judgements, for scripts/score_audits.py.
+AUDITS = {"time_window_direction": "data/v1c_time_window_direction.jsonl", "citation_audit": "data/v1c_citation_audit.jsonl"}
+# Runs on the 84 clauses A marked as stating no rule, for scripts/rule_detection.py.
 NORULE_RUNS = {f"data/v1b_llm_{run}_norule.jsonl" for run in (
-    "sonnet55", "cited_sonnet55", "cited_ctx_sonnet55", "opus55", "cited_opus55", "guided_opus55",
+    "qwen7b", "cited_qwen7b", "guided_qwen7b", "cited_ctx_qwen7b", "cited_guided_qwen7b", "sonnet55", "cited_sonnet55", "cited_ctx_sonnet55", "opus55", "cited_opus55", "guided_opus55",
     "cited_ctx_opus55", "cited_guided_opus55")}
 PREDICTION_FILES = sorted({p for _, p in EVAL_RUNS.values()} | set(METHODS.values()) | VARIANCE_RUNS | NORULE_RUNS)
 
@@ -92,7 +94,7 @@ def queue_rows(path: Path) -> list[dict]:
 
 
 def export(out: Path) -> int:
-    missing = [p for p in [QUEUE, *LABEL_SETS.values(), *SNAPSHOTS.values(), *SAMPLES.values(), *PREDICTION_FILES, RETRIEVAL_RUNS]
+    missing = [p for p in [QUEUE, *LABEL_SETS.values(), *SNAPSHOTS.values(), *SAMPLES.values(), *PREDICTION_FILES, RETRIEVAL_RUNS, *AUDITS.values()]
                if not Path(p).exists()]
     if missing:
         print(f"error: missing inputs: {missing}", file=sys.stderr)
@@ -121,6 +123,9 @@ def export(out: Path) -> int:
         write_jsonl(out / "predictions" / Path(path).name, rows)
     write_jsonl(out / "retrieval" / "runs.jsonl", [json.loads(line) for line in
                 RETRIEVAL_RUNS.read_text(encoding="utf-8").splitlines() if line.strip()])
+    for name, path in AUDITS.items():
+        write_jsonl(out / "audits" / f"{name}.jsonl", [json.loads(line) for line in
+                    Path(path).read_text(encoding="utf-8").splitlines() if line.strip()])
     sums = sorted(f"{hashlib.sha256(p.read_bytes()).hexdigest()}  {p.relative_to(out).as_posix()}"
                   for p in out.rglob("*") if p.is_file())
     (out / "SHA256SUMS").write_text("\n".join(sums) + "\n", encoding="utf-8", newline="\n")

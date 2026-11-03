@@ -1,0 +1,19 @@
+{"direction": "at_least_before", "notes": null, "record_id": "1b96bfbd-513d-4120-98bf-6d3f2e3d4c0e:8", "reference_event": "departure"}
+{"direction": "at_least_before", "notes": null, "record_id": "33675e61-f014-4fc5-a684-69e23b2fea17:3", "reference_event": "departure"}
+{"direction": "at_least_before", "notes": null, "record_id": "deab5d5c-6cfa-4ce7-9967-e466f19d4f71:2", "reference_event": "departure"}
+{"direction": "at_least_before", "notes": null, "record_id": "44363cef-7cd9-47c4-b0b7-397347eebc94:2", "reference_event": "departure"}
+{"direction": "at_least_before", "notes": null, "record_id": "8bba73f4-8038-4b19-a97a-6cb4f6250b64:5", "reference_event": "departure"}
+{"direction": "at_least_before", "notes": null, "record_id": "d88df4a0-31a8-4af8-b765-ad34528e99c8:2", "reference_event": "departure"}
+{"direction": "within", "notes": null, "record_id": "2fe0b71a-afd1-4216-bdb7-9e5bcb80d997:1", "reference_event": "departure"}
+{"direction": "at_least_before", "notes": null, "record_id": "2fe0b71a-afd1-4216-bdb7-9e5bcb80d997:2", "reference_event": "departure"}
+{"direction": "at_least_before", "notes": null, "record_id": "3a0f34f1-c15f-4ef9-915b-4a6b9e862f2e:1", "reference_event": "departure"}
+{"direction": "at_least_before", "notes": null, "record_id": "3a0f34f1-c15f-4ef9-915b-4a6b9e862f2e:2", "reference_event": "departure"}
+{"direction": "within", "notes": null, "record_id": "3a0f34f1-c15f-4ef9-915b-4a6b9e862f2e:4", "reference_event": "departure"}
+{"direction": "at_least_before", "notes": null, "record_id": "3a0f34f1-c15f-4ef9-915b-4a6b9e862f2e:6", "reference_event": "departure"}
+{"direction": "at_least_before", "notes": null, "record_id": "51a83805-6bc7-4f29-a7f9-64d151e53874:4", "reference_event": "departure"}
+{"direction": "at_least_before", "notes": null, "record_id": "fede7a05-ee56-4a58-b0d8-e27ec75b93a9:1", "reference_event": "departure"}
+{"direction": "within", "notes": null, "record_id": "fede7a05-ee56-4a58-b0d8-e27ec75b93a9:2", "reference_event": "departure"}
+{"direction": "within", "notes": null, "record_id": "10270553-4e65-447f-b78b-eb8ff9ca7160:3", "reference_event": "departure"}
+{"direction": "range", "notes": null, "record_id": "6ac99804-b9be-4535-8273-5b836e212b61:5", "reference_event": "ticket_issue"}
+{"direction": "range", "notes": null, "record_id": "461c673f-fe61-41bf-a75b-33efb5375544:2", "reference_event": "departure"}
+{"direction": "within", "notes": "Condition: Ticket must be issued a week or more before", "record_id": "3a983975-6872-4192-8e7f-ae57b44c694c:5", "reference_event": "booking_or_purchase"}

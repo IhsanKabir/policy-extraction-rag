@@ -41,7 +41,7 @@ prompts and settings, but hosted models can change behind a fixed name.
 | `docs/LABELING_GUIDE.md` | the annotation guide |
 | `evals/v1b_eval.py` | the scorer |
 | `extractors/` | LLM extraction (Ollama and Claude Message Batches), prompts, citation gate |
-| `scripts/` | agreement, adjudication, provenance audit, error analysis, variance, retrieval, rule detection, robustness, release export and reproduction |
+| `scripts/` | agreement, adjudication, provenance audit, error analysis, variance, retrieval, rule detection, robustness, manual audits, release export and reproduction |
 | `results/` | committed results; `reproduce.py` checks them |
 | `api/`, `web/`, `ingestion/` | the earlier retrieval and labelling prototype the data was collected with |
 

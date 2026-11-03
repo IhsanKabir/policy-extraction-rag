@@ -1,0 +1,224 @@
+{
+  "direction_rules": [
+    [
+      "range",
+      "\\bminimum\\b.*\\bmaximum\\b|\\bmaximum\\b.*\\bminimum\\b|\\bbetween\\b"
+    ],
+    [
+      "within",
+      "\\bwithin\\b|\\bless than\\b|\\binside\\b"
+    ],
+    [
+      "at_least_before",
+      "\\bat least\\b|\\bup ?to\\b|\\bminimum\\b|\\bno later than\\b|\\bnot later than\\b"
+    ]
+  ],
+  "time_window": {
+    "n": 19,
+    "annotator_direction": {
+      "at_least_before": 12,
+      "within": 5,
+      "range": 2
+    },
+    "annotator_reference_event": {
+      "departure": 17,
+      "ticket_issue": 1,
+      "booking_or_purchase": 1
+    },
+    "clause_states_direction": 17,
+    "systems": {
+      "v1c_heuristic": {
+        "duration_match": 2,
+        "agrees": 2
+      },
+      "v1c_llm_qwen7b": {
+        "duration_match": 16,
+        "not_stated": 15,
+        "dropped_clause_qualifier": 13,
+        "agrees": 1
+      },
+      "v1c_llm_guided_qwen7b": {
+        "duration_match": 16,
+        "not_stated": 15,
+        "dropped_clause_qualifier": 13,
+        "agrees": 1
+      },
+      "v1c_llm_cited_qwen7b": {
+        "duration_match": 10,
+        "not_stated": 10,
+        "dropped_clause_qualifier": 8
+      },
+      "v1c_llm_cited_ctx_qwen7b": {
+        "duration_match": 12,
+        "not_stated": 9,
+        "dropped_clause_qualifier": 7,
+        "agrees": 3
+      },
+      "v1c_llm_cited_guided_qwen7b": {
+        "duration_match": 10,
+        "not_stated": 10,
+        "dropped_clause_qualifier": 8
+      },
+      "v1c_llm_sonnet55": {
+        "duration_match": 18,
+        "not_stated": 2,
+        "dropped_clause_qualifier": 0,
+        "agrees": 16
+      },
+      "v1c_llm_cited_sonnet55": {
+        "duration_match": 18,
+        "not_stated": 2,
+        "dropped_clause_qualifier": 0,
+        "agrees": 16
+      },
+      "v1c_llm_cited_ctx_sonnet55": {
+        "duration_match": 18,
+        "not_stated": 2,
+        "dropped_clause_qualifier": 0,
+        "agrees": 16
+      },
+      "v1c_llm_opus55": {
+        "duration_match": 18,
+        "not_stated": 2,
+        "dropped_clause_qualifier": 0,
+        "agrees": 16
+      },
+      "v1c_llm_cited_opus55": {
+        "duration_match": 18,
+        "not_stated": 2,
+        "dropped_clause_qualifier": 0,
+        "agrees": 16
+      },
+      "v1c_llm_guided_opus55": {
+        "duration_match": 18,
+        "not_stated": 2,
+        "dropped_clause_qualifier": 0,
+        "agrees": 16
+      },
+      "v1c_llm_cited_ctx_opus55": {
+        "duration_match": 18,
+        "not_stated": 2,
+        "dropped_clause_qualifier": 0,
+        "agrees": 16
+      },
+      "v1c_llm_cited_guided_opus55": {
+        "duration_match": 18,
+        "not_stated": 2,
+        "dropped_clause_qualifier": 0,
+        "agrees": 16
+      }
+    }
+  },
+  "citation_audit": {
+    "all": {
+      "n": 46,
+      "yes": 42,
+      "partly": 4,
+      "no": 0,
+      "yes_rate": 0.9130434782608695,
+      "yes_rate_ci": [
+        0.796750643647758,
+        0.9656646881232924
+      ],
+      "with_note": 23
+    },
+    "by_system": {
+      "Opus 5.5 + cite + guide": {
+        "n": 24,
+        "yes": 21,
+        "partly": 3,
+        "no": 0,
+        "yes_rate": 0.875,
+        "yes_rate_ci": [
+          0.6899571185214243,
+          0.9565574496068442
+        ],
+        "with_note": 13
+      },
+      "Sonnet 5.5 + cite": {
+        "n": 22,
+        "yes": 21,
+        "partly": 1,
+        "no": 0,
+        "yes_rate": 0.9545454545454546,
+        "yes_rate_ci": [
+          0.7820151050048196,
+          0.9919307806988522
+        ],
+        "with_note": 10
+      }
+    },
+    "by_field_group": {
+      "categorical": {
+        "n": 20,
+        "yes": 18,
+        "partly": 2,
+        "no": 0,
+        "yes_rate": 0.9,
+        "yes_rate_ci": [
+          0.6989617935882066,
+          0.9721341060158468
+        ],
+        "with_note": 7
+      },
+      "value": {
+        "n": 16,
+        "yes": 15,
+        "partly": 1,
+        "no": 0,
+        "yes_rate": 0.9375,
+        "yes_rate_ci": [
+          0.7167073163197013,
+          0.9888809426916687
+        ],
+        "with_note": 7
+      },
+      "text": {
+        "n": 10,
+        "yes": 9,
+        "partly": 1,
+        "no": 0,
+        "yes_rate": 0.9,
+        "yes_rate_ci": [
+          0.5958436145024278,
+          0.9821242504842788
+        ],
+        "with_note": 9
+      }
+    },
+    "not_yes": [
+      {
+        "record_id": "2fe0b71a-afd1-4216-bdb7-9e5bcb80d997:2",
+        "system": "Opus 5.5 + cite + guide",
+        "field": "penalty_currency",
+        "value": "$",
+        "supports": "partly",
+        "notes": "55 is missing or currency USD missing"
+      },
+      {
+        "record_id": "a7aa1de9-3800-4d4c-ac95-541c6f601d5b:1",
+        "system": "Opus 5.5 + cite + guide",
+        "field": "before_after_departure",
+        "value": "unknown",
+        "supports": "partly",
+        "notes": "wrong informatyion in the value field here: the denial of travel would definitely be checked before departure"
+      },
+      {
+        "record_id": "38235202-4163-4525-ad18-8d75e2a478d3:2",
+        "system": "Opus 5.5 + cite + guide",
+        "field": "penalty_type",
+        "value": "unknown",
+        "supports": "partly",
+        "notes": "its clearly talking about refund. Penalty type fixed amount is more appropriate"
+      },
+      {
+        "record_id": "44363cef-7cd9-47c4-b0b7-397347eebc94:2",
+        "system": "Sonnet 5.5 + cite",
+        "field": "tax_refund_rule",
+        "value": "Refund is including all SSRs such as seats selection, meals, baggage allowance, connecting fee, Nok First, lounge, airport tax and insurance (Nok Sure)",
+        "supports": "partly",
+        "notes": "in the tax refund field putting baggage meal and other isn't well"
+      }
+    ]
+  }
+}

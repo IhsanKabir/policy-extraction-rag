@@ -35,6 +35,8 @@ from evals import v1b_eval as E  # noqa: E402
 SYSTEMS = {  # name -> prediction files (labelled run, no-rule run)
     "Rule-based": ["data/policy_clauses_fine.jsonl"],
     **{name: [f"data/v1b_llm_{run}.jsonl", f"data/v1b_llm_{run}_norule.jsonl"] for name, run in (
+        ("Qwen2.5-7B", "qwen7b"), ("Qwen2.5-7B + cite", "cited_qwen7b"), ("Qwen2.5-7B + guide", "guided_qwen7b"),
+        ("Qwen2.5-7B + cite + ctx", "cited_ctx_qwen7b"), ("Qwen2.5-7B + cite + guide", "cited_guided_qwen7b"),
         ("Sonnet 5.5", "sonnet55"), ("Sonnet 5.5 + cite", "cited_sonnet55"),
         ("Sonnet 5.5 + cite + ctx", "cited_ctx_sonnet55"), ("Opus 5.5", "opus55"),
         ("Opus 5.5 + cite", "cited_opus55"), ("Opus 5.5 + guide", "guided_opus55"),
