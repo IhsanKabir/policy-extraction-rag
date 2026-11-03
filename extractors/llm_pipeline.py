@@ -231,18 +231,31 @@ def _strip_digit_commas(s: str) -> str:
     return re.sub(r"(?<=\d),(?=\d)", "", s)
 
 
+# A number must not be part of a longer number ("20" in "120", "1500" in
+# "1500.5"); letters may touch it ("AED200"). Text must not be part of a longer
+# word ("refund" in "refundable").
+_NUM_BOUNDS = (r"(?<!\d)(?<!\d\.)", r"(?!\d)(?!\.\d)")
+_WORD_CHAR = "[0-9a-z]"
+
+
 def _value_in_text(value, text_norm: str) -> bool:
-    """Does the asserted value literally occur in (normalized) text?
-    Floats match integer-collapsed and %g renderings (1500.0 -> "1500"),
-    with digit-group commas in the text ignored."""
+    """Does the asserted value occur in (normalized) text as a whole number or
+    whole words? Floats match integer-collapsed and %g renderings
+    (1500.0 -> "1500"), with digit-group commas in the text ignored."""
     if isinstance(value, float):
         haystack = _strip_digit_commas(text_norm)
         candidates = {f"{value}", f"{value:g}"}
         if value == int(value):
             candidates.add(str(int(value)))
-        return any(c in haystack for c in candidates)
+        pre, post = _NUM_BOUNDS
+        return any(re.search(pre + re.escape(c) + post, haystack) for c in candidates)
     if isinstance(value, str):
-        return _norm(value) in text_norm
+        needle = _norm(value)
+        if not needle:
+            return False
+        pre = f"(?<!{_WORD_CHAR})" if needle[0].isalnum() else ""
+        post = f"(?!{_WORD_CHAR})" if needle[-1].isalnum() else ""
+        return re.search(pre + re.escape(needle) + post, text_norm) is not None
     return False
 
 

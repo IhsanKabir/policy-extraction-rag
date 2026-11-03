@@ -353,3 +353,24 @@ def test_parse_takes_final_object_after_self_correction():
     assert out["action"] == "conditional" and out["citations"] == {"action": "x"}
     assert parse_model_json('{"a": 1}') == {"a": 1}
     assert parse_model_json("no json here") is None
+
+
+def test_value_in_text_requires_whole_numbers():
+    """Review 2026-11-03: "20" must not ground against "120", nor 1500 against 1500.5."""
+    from extractors.llm_pipeline import _norm, _value_in_text
+
+    assert not _value_in_text(20.0, _norm("Change fee USD 120"))
+    assert not _value_in_text(1500.0, _norm("fee of 1,500.50 applies"))
+    assert not _value_in_text(5.0, _norm("cancel 15% of the fare"))
+    assert _value_in_text(200.0, _norm("Rebooking AED200 up to 24 hrs"))
+    assert _value_in_text(55.0, _norm("a minimum charge of $55."))
+    assert _value_in_text(5.0, _norm("5% of refundable amount"))
+
+
+def test_value_in_text_requires_whole_words_for_text():
+    from extractors.llm_pipeline import _norm, _value_in_text
+
+    assert not _value_in_text("24 hours", _norm("at least 124 hours before departure"))
+    assert not _value_in_text("refund", _norm("non-refundable fare"))
+    assert _value_in_text("Value", _norm("4.Value, You can modify your booking once"))
+    assert _value_in_text("24 hours", _norm("within 24 hours."))
