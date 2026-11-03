@@ -58,3 +58,9 @@ handoff/
 # Reproduction workspace (scripts/reproduce.py) and local test temp
 build/
 .pytest-tmp/
+
+# LaTeX build output
+paper/build/
+paper/*.aux
+paper/*.log
+paper/*.out

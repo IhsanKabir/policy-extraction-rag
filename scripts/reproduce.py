@@ -68,6 +68,7 @@ def restore(release: Path, ws: Path) -> dict[str, Path]:
     write_jsonl(ws / "data/queue_relabel_a_unseen.jsonl", read_jsonl(release / "samples/relabel_a_unseen.jsonl"))
     for pred in (release / "predictions").glob("*.jsonl"):
         shutil.copyfile(pred, ws / "data" / pred.name)
+    shutil.copyfile(release / "retrieval/runs.jsonl", ws / "data/retrieval_runs.jsonl")
     return snapshots
 
 
@@ -87,7 +88,8 @@ def commands(snapshots: dict[str, Path]) -> list[list[str]]:
              iaa + ["--b-db", "data/labeling_relabel_a.db", "--iaa-queue", "data/queue_relabel_a_unseen.jsonl",
                     "--out", "results/v1c_self_relabel_unseen.json"],
              py + [s("error_analysis.py"), "--examples", "handoff/error_examples.md"],
-             py + [s("variance_analysis.py")]]
+             py + [s("variance_analysis.py")],
+             py + [s("retrieval_eval.py")]]
     return cmds
 
 

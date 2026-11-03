@@ -1,0 +1,722 @@
+{
+  "n_queries": 23,
+  "n_relevant": 83,
+  "n_relevant_random_sample": 58,
+  "queries": {
+    "cancellation": "What happens if the booking is cancelled, and what cancellation fee applies?",
+    "no_show": "What happens if the passenger does not show up for the flight?",
+    "refund": "Can the ticket be refunded, and what refund fee or penalty applies?",
+    "reissue_change": "Can the flight or travel date be changed, and what change fee applies?"
+  },
+  "dense_model": "BAAI/bge-small-en-v1.5",
+  "field_recall_oracle": {
+    "Rule baseline": 0.4212218649517685,
+    "Opus 5.5 + cite + guide": 0.7877813504823151
+  },
+  "levels": {
+    "clause": {
+      "pool_units": 3179,
+      "random_order_recall": {
+        "1": 0.022933630275251093,
+        "3": 0.06880089082575327,
+        "5": 0.11466815137625545,
+        "10": 0.2293363027525109,
+        "20": 0.4124878665491986
+      },
+      "retrievers": {
+        "bm25": {
+          "1": {
+            "recall": 0.0963855421686747,
+            "recall_ci": [
+              0.043010752688172046,
+              0.1724137931034483
+            ],
+            "success": 0.34782608695652173,
+            "capped_recall": 0.34782608695652173,
+            "random_sample": {
+              "recall": 0.08620689655172414,
+              "recall_ci": [
+                0.022222222222222223,
+                0.1891891891891892
+              ],
+              "success": 0.25,
+              "capped_recall": 0.25
+            },
+            "field_recall": {
+              "Rule baseline": 0.05144694533762058,
+              "Opus 5.5 + cite + guide": 0.07717041800643087
+            },
+            "judged_precision": {
+              "judged": 10,
+              "relevant": 8,
+              "precision": 0.8
+            }
+          },
+          "3": {
+            "recall": 0.20481927710843373,
+            "recall_ci": [
+              0.09411764705882353,
+              0.3283582089552239
+            ],
+            "success": 0.391304347826087,
+            "capped_recall": 0.34782608695652173,
+            "random_sample": {
+              "recall": 0.1724137931034483,
+              "recall_ci": [
+                0.08,
+                0.3
+              ],
+              "success": 0.35,
+              "capped_recall": 0.2833333333333333
+            },
+            "field_recall": {
+              "Rule baseline": 0.0932475884244373,
+              "Opus 5.5 + cite + guide": 0.15434083601286175
+            },
+            "judged_precision": {
+              "judged": 23,
+              "relevant": 18,
+              "precision": 0.782608695652174
+            }
+          },
+          "5": {
+            "recall": 0.2891566265060241,
+            "recall_ci": [
+              0.16279069767441862,
+              0.40963855421686746
+            ],
+            "success": 0.4782608695652174,
+            "capped_recall": 0.3565217391304348,
+            "random_sample": {
+              "recall": 0.2413793103448276,
+              "recall_ci": [
+                0.11538461538461539,
+                0.38
+              ],
+              "success": 0.4,
+              "capped_recall": 0.31
+            },
+            "field_recall": {
+              "Rule baseline": 0.14469453376205788,
+              "Opus 5.5 + cite + guide": 0.2282958199356913
+            },
+            "judged_precision": {
+              "judged": 33,
+              "relevant": 25,
+              "precision": 0.7575757575757576
+            }
+          },
+          "10": {
+            "recall": 0.3855421686746988,
+            "recall_ci": [
+              0.22641509433962265,
+              0.5242718446601942
+            ],
+            "success": 0.5217391304347826,
+            "capped_recall": 0.36231884057971014,
+            "random_sample": {
+              "recall": 0.27586206896551724,
+              "recall_ci": [
+                0.13333333333333333,
+                0.4065934065934066
+              ],
+              "success": 0.45,
+              "capped_recall": 0.29547619047619045
+            },
+            "field_recall": {
+              "Rule baseline": 0.1864951768488746,
+              "Opus 5.5 + cite + guide": 0.3054662379421222
+            },
+            "judged_precision": {
+              "judged": 61,
+              "relevant": 39,
+              "precision": 0.639344262295082
+            }
+          },
+          "20": {
+            "recall": 0.5662650602409639,
+            "recall_ci": [
+              0.3275862068965517,
+              0.7368421052631579
+            ],
+            "success": 0.6521739130434783,
+            "capped_recall": 0.5036231884057971,
+            "random_sample": {
+              "recall": 0.46551724137931033,
+              "recall_ci": [
+                0.22,
+                0.7
+              ],
+              "success": 0.6,
+              "capped_recall": 0.45
+            },
+            "field_recall": {
+              "Rule baseline": 0.2604501607717042,
+              "Opus 5.5 + cite + guide": 0.45016077170418006
+            },
+            "judged_precision": {
+              "judged": 105,
+              "relevant": 57,
+              "precision": 0.5428571428571428
+            }
+          }
+        },
+        "dense": {
+          "1": {
+            "recall": 0.07228915662650602,
+            "recall_ci": [
+              0.03225806451612903,
+              0.11688311688311688
+            ],
+            "success": 0.2608695652173913,
+            "capped_recall": 0.2608695652173913,
+            "random_sample": {
+              "recall": 0.034482758620689655,
+              "recall_ci": [
+                0.0,
+                0.0851063829787234
+              ],
+              "success": 0.1,
+              "capped_recall": 0.1
+            },
+            "field_recall": {
+              "Rule baseline": 0.028938906752411574,
+              "Opus 5.5 + cite + guide": 0.04823151125401929
+            },
+            "judged_precision": {
+              "judged": 6,
+              "relevant": 6,
+              "precision": 1.0
+            }
+          },
+          "3": {
+            "recall": 0.21686746987951808,
+            "recall_ci": [
+              0.1320754716981132,
+              0.3218390804597701
+            ],
+            "success": 0.5217391304347826,
+            "capped_recall": 0.38405797101449274,
+            "random_sample": {
+              "recall": 0.1724137931034483,
+              "recall_ci": [
+                0.09259259259259259,
+                0.2857142857142857
+              ],
+              "success": 0.45,
+              "capped_recall": 0.30833333333333335
+            },
+            "field_recall": {
+              "Rule baseline": 0.09646302250803858,
+              "Opus 5.5 + cite + guide": 0.15755627009646303
+            },
+            "judged_precision": {
+              "judged": 21,
+              "relevant": 20,
+              "precision": 0.9523809523809523
+            }
+          },
+          "5": {
+            "recall": 0.3132530120481928,
+            "recall_ci": [
+              0.18421052631578946,
+              0.4626865671641791
+            ],
+            "success": 0.5652173913043478,
+            "capped_recall": 0.4210144927536232,
+            "random_sample": {
+              "recall": 0.2413793103448276,
+              "recall_ci": [
+                0.13725490196078433,
+                0.375
+              ],
+              "success": 0.5,
+              "capped_recall": 0.37083333333333335
+            },
+            "field_recall": {
+              "Rule baseline": 0.14790996784565916,
+              "Opus 5.5 + cite + guide": 0.2315112540192926
+            },
+            "judged_precision": {
+              "judged": 32,
+              "relevant": 29,
+              "precision": 0.90625
+            }
+          },
+          "10": {
+            "recall": 0.4457831325301205,
+            "recall_ci": [
+              0.27941176470588236,
+              0.6231884057971014
+            ],
+            "success": 0.6521739130434783,
+            "capped_recall": 0.4496894409937888,
+            "random_sample": {
+              "recall": 0.3275862068965517,
+              "recall_ci": [
+                0.20754716981132076,
+                0.48
+              ],
+              "success": 0.6,
+              "capped_recall": 0.4154761904761905
+            },
+            "field_recall": {
+              "Rule baseline": 0.21221864951768488,
+              "Opus 5.5 + cite + guide": 0.36977491961414793
+            },
+            "judged_precision": {
+              "judged": 60,
+              "relevant": 45,
+              "precision": 0.75
+            }
+          },
+          "20": {
+            "recall": 0.6385542168674698,
+            "recall_ci": [
+              0.4126984126984127,
+              0.8088235294117647
+            ],
+            "success": 0.7391304347826086,
+            "capped_recall": 0.5760869565217391,
+            "random_sample": {
+              "recall": 0.5172413793103449,
+              "recall_ci": [
+                0.3,
+                0.7397260273972602
+              ],
+              "success": 0.7,
+              "capped_recall": 0.5333333333333333
+            },
+            "field_recall": {
+              "Rule baseline": 0.2958199356913183,
+              "Opus 5.5 + cite + guide": 0.5337620578778135
+            },
+            "judged_precision": {
+              "judged": 104,
+              "relevant": 67,
+              "precision": 0.6442307692307693
+            }
+          }
+        },
+        "hybrid": {
+          "1": {
+            "recall": 0.07228915662650602,
+            "recall_ci": [
+              0.03529411764705882,
+              0.12222222222222222
+            ],
+            "success": 0.2608695652173913,
+            "capped_recall": 0.2608695652173913,
+            "random_sample": {
+              "recall": 0.05172413793103448,
+              "recall_ci": [
+                0.0,
+                0.125
+              ],
+              "success": 0.15,
+              "capped_recall": 0.15
+            },
+            "field_recall": {
+              "Rule baseline": 0.03215434083601286,
+              "Opus 5.5 + cite + guide": 0.04823151125401929
+            },
+            "judged_precision": {
+              "judged": 7,
+              "relevant": 6,
+              "precision": 0.8571428571428571
+            }
+          },
+          "3": {
+            "recall": 0.21686746987951808,
+            "recall_ci": [
+              0.12631578947368421,
+              0.32323232323232326
+            ],
+            "success": 0.43478260869565216,
+            "capped_recall": 0.35507246376811596,
+            "random_sample": {
+              "recall": 0.13793103448275862,
+              "recall_ci": [
+                0.061224489795918366,
+                0.23684210526315788
+              ],
+              "success": 0.35,
+              "capped_recall": 0.24166666666666667
+            },
+            "field_recall": {
+              "Rule baseline": 0.10289389067524116,
+              "Opus 5.5 + cite + guide": 0.17684887459807075
+            },
+            "judged_precision": {
+              "judged": 21,
+              "relevant": 19,
+              "precision": 0.9047619047619048
+            }
+          },
+          "5": {
+            "recall": 0.3132530120481928,
+            "recall_ci": [
+              0.1875,
+              0.4576271186440678
+            ],
+            "success": 0.5217391304347826,
+            "capped_recall": 0.3898550724637681,
+            "random_sample": {
+              "recall": 0.22413793103448276,
+              "recall_ci": [
+                0.11627906976744186,
+                0.3404255319148936
+              ],
+              "success": 0.45,
+              "capped_recall": 0.31833333333333336
+            },
+            "field_recall": {
+              "Rule baseline": 0.15112540192926044,
+              "Opus 5.5 + cite + guide": 0.2604501607717042
+            },
+            "judged_precision": {
+              "judged": 33,
+              "relevant": 30,
+              "precision": 0.9090909090909091
+            }
+          },
+          "10": {
+            "recall": 0.43373493975903615,
+            "recall_ci": [
+              0.27906976744186046,
+              0.5882352941176471
+            ],
+            "success": 0.6086956521739131,
+            "capped_recall": 0.4608695652173913,
+            "random_sample": {
+              "recall": 0.3275862068965517,
+              "recall_ci": [
+                0.19148936170212766,
+                0.49295774647887325
+              ],
+              "success": 0.55,
+              "capped_recall": 0.4038095238095238
+            },
+            "field_recall": {
+              "Rule baseline": 0.21543408360128619,
+              "Opus 5.5 + cite + guide": 0.35691318327974275
+            },
+            "judged_precision": {
+              "judged": 61,
+              "relevant": 45,
+              "precision": 0.7377049180327869
+            }
+          },
+          "20": {
+            "recall": 0.6385542168674698,
+            "recall_ci": [
+              0.42105263157894735,
+              0.7984496124031008
+            ],
+            "success": 0.8260869565217391,
+            "capped_recall": 0.6526915113871635,
+            "random_sample": {
+              "recall": 0.5172413793103449,
+              "recall_ci": [
+                0.3191489361702128,
+                0.7209302325581395
+              ],
+              "success": 0.8,
+              "capped_recall": 0.6089285714285714
+            },
+            "field_recall": {
+              "Rule baseline": 0.2829581993569132,
+              "Opus 5.5 + cite + guide": 0.49517684887459806
+            },
+            "judged_precision": {
+              "judged": 111,
+              "relevant": 66,
+              "precision": 0.5945945945945946
+            }
+          }
+        }
+      }
+    },
+    "chunk": {
+      "pool_units": 575,
+      "random_order_recall": {
+        "1": 0.11221288878292605,
+        "2": 0.2244257775658521,
+        "3": 0.33663866634877815,
+        "5": 0.4867672551596101
+      },
+      "retrievers": {
+        "bm25": {
+          "1": {
+            "recall": 0.21686746987951808,
+            "recall_ci": [
+              0.06349206349206349,
+              0.391304347826087
+            ],
+            "success": 0.34782608695652173,
+            "capped_recall": 0.34782608695652173,
+            "random_sample": {
+              "recall": 0.13793103448275862,
+              "recall_ci": [
+                0.03333333333333333,
+                0.23214285714285715
+              ],
+              "success": 0.25,
+              "capped_recall": 0.25
+            },
+            "field_recall": {
+              "Rule baseline": 0.10289389067524116,
+              "Opus 5.5 + cite + guide": 0.17041800643086816
+            }
+          },
+          "2": {
+            "recall": 0.4457831325301205,
+            "recall_ci": [
+              0.23404255319148937,
+              0.6144578313253012
+            ],
+            "success": 0.4782608695652174,
+            "capped_recall": 0.391304347826087,
+            "random_sample": {
+              "recall": 0.3275862068965517,
+              "recall_ci": [
+                0.12,
+                0.5180722891566265
+              ],
+              "success": 0.4,
+              "capped_recall": 0.325
+            },
+            "field_recall": {
+              "Rule baseline": 0.18971061093247588,
+              "Opus 5.5 + cite + guide": 0.3408360128617363
+            }
+          },
+          "3": {
+            "recall": 0.4939759036144578,
+            "recall_ci": [
+              0.27848101265822783,
+              0.6511627906976745
+            ],
+            "success": 0.5217391304347826,
+            "capped_recall": 0.42028985507246375,
+            "random_sample": {
+              "recall": 0.3620689655172414,
+              "recall_ci": [
+                0.14583333333333334,
+                0.5517241379310345
+              ],
+              "success": 0.45,
+              "capped_recall": 0.35
+            },
+            "field_recall": {
+              "Rule baseline": 0.21543408360128619,
+              "Opus 5.5 + cite + guide": 0.39228295819935693
+            }
+          },
+          "5": {
+            "recall": 0.6506024096385542,
+            "recall_ci": [
+              0.4421052631578947,
+              0.7971014492753623
+            ],
+            "success": 0.6956521739130435,
+            "capped_recall": 0.6086956521739131,
+            "random_sample": {
+              "recall": 0.5344827586206896,
+              "recall_ci": [
+                0.3333333333333333,
+                0.7076923076923077
+              ],
+              "success": 0.65,
+              "capped_recall": 0.57
+            },
+            "field_recall": {
+              "Rule baseline": 0.26688102893890675,
+              "Opus 5.5 + cite + guide": 0.5144694533762058
+            }
+          }
+        },
+        "dense": {
+          "1": {
+            "recall": 0.1927710843373494,
+            "recall_ci": [
+              0.09433962264150944,
+              0.28205128205128205
+            ],
+            "success": 0.34782608695652173,
+            "capped_recall": 0.34782608695652173,
+            "random_sample": {
+              "recall": 0.15517241379310345,
+              "recall_ci": [
+                0.0425531914893617,
+                0.265625
+              ],
+              "success": 0.25,
+              "capped_recall": 0.25
+            },
+            "field_recall": {
+              "Rule baseline": 0.06752411575562701,
+              "Opus 5.5 + cite + guide": 0.15434083601286175
+            }
+          },
+          "2": {
+            "recall": 0.3614457831325301,
+            "recall_ci": [
+              0.1774193548387097,
+              0.5373134328358209
+            ],
+            "success": 0.43478260869565216,
+            "capped_recall": 0.34782608695652173,
+            "random_sample": {
+              "recall": 0.22413793103448276,
+              "recall_ci": [
+                0.08888888888888889,
+                0.3787878787878788
+              ],
+              "success": 0.35,
+              "capped_recall": 0.275
+            },
+            "field_recall": {
+              "Rule baseline": 0.14469453376205788,
+              "Opus 5.5 + cite + guide": 0.29260450160771706
+            }
+          },
+          "3": {
+            "recall": 0.42168674698795183,
+            "recall_ci": [
+              0.24096385542168675,
+              0.6097560975609756
+            ],
+            "success": 0.5652173913043478,
+            "capped_recall": 0.463768115942029,
+            "random_sample": {
+              "recall": 0.27586206896551724,
+              "recall_ci": [
+                0.14285714285714285,
+                0.4307692307692308
+              ],
+              "success": 0.5,
+              "capped_recall": 0.3833333333333333
+            },
+            "field_recall": {
+              "Rule baseline": 0.17041800643086816,
+              "Opus 5.5 + cite + guide": 0.3311897106109325
+            }
+          },
+          "5": {
+            "recall": 0.5542168674698795,
+            "recall_ci": [
+              0.30434782608695654,
+              0.7378640776699029
+            ],
+            "success": 0.6086956521739131,
+            "capped_recall": 0.4891304347826087,
+            "random_sample": {
+              "recall": 0.3793103448275862,
+              "recall_ci": [
+                0.16666666666666666,
+                0.5909090909090909
+              ],
+              "success": 0.55,
+              "capped_recall": 0.4225
+            },
+            "field_recall": {
+              "Rule baseline": 0.24437299035369775,
+              "Opus 5.5 + cite + guide": 0.4533762057877814
+            }
+          }
+        },
+        "hybrid": {
+          "1": {
+            "recall": 0.24096385542168675,
+            "recall_ci": [
+              0.08421052631578947,
+              0.41818181818181815
+            ],
+            "success": 0.34782608695652173,
+            "capped_recall": 0.34782608695652173,
+            "random_sample": {
+              "recall": 0.15517241379310345,
+              "recall_ci": [
+                0.037037037037037035,
+                0.26436781609195403
+              ],
+              "success": 0.25,
+              "capped_recall": 0.25
+            },
+            "field_recall": {
+              "Rule baseline": 0.09646302250803858,
+              "Opus 5.5 + cite + guide": 0.1864951768488746
+            }
+          },
+          "2": {
+            "recall": 0.3614457831325301,
+            "recall_ci": [
+              0.18421052631578946,
+              0.5476190476190477
+            ],
+            "success": 0.4782608695652174,
+            "capped_recall": 0.3695652173913043,
+            "random_sample": {
+              "recall": 0.2413793103448276,
+              "recall_ci": [
+                0.10869565217391304,
+                0.3902439024390244
+              ],
+              "success": 0.4,
+              "capped_recall": 0.3
+            },
+            "field_recall": {
+              "Rule baseline": 0.14790996784565916,
+              "Opus 5.5 + cite + guide": 0.2733118971061093
+            }
+          },
+          "3": {
+            "recall": 0.42168674698795183,
+            "recall_ci": [
+              0.2441860465116279,
+              0.6103896103896104
+            ],
+            "success": 0.5652173913043478,
+            "capped_recall": 0.4492753623188406,
+            "random_sample": {
+              "recall": 0.29310344827586204,
+              "recall_ci": [
+                0.15254237288135594,
+                0.45714285714285713
+              ],
+              "success": 0.5,
+              "capped_recall": 0.3833333333333333
+            },
+            "field_recall": {
+              "Rule baseline": 0.17684887459807075,
+              "Opus 5.5 + cite + guide": 0.3311897106109325
+            }
+          },
+          "5": {
+            "recall": 0.5903614457831325,
+            "recall_ci": [
+              0.3373493975903614,
+              0.7747747747747747
+            ],
+            "success": 0.6086956521739131,
+            "capped_recall": 0.532608695652174,
+            "random_sample": {
+              "recall": 0.43103448275862066,
+              "recall_ci": [
+                0.2,
+                0.6428571428571429
+              ],
+              "success": 0.55,
+              "capped_recall": 0.4725
+            },
+            "field_recall": {
+              "Rule baseline": 0.2508038585209003,
+              "Opus 5.5 + cite + guide": 0.4630225080385852
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -10,6 +10,7 @@ working files the scoring scripts expect:
   release/labels/provenance/<n>.jsonl   annotator A's label snapshots before each fix pass
   release/samples/<name>.jsonl          IAA and relabel samples (queue rows)
   release/predictions/<file>.jsonl      every system's output on the queue clauses
+  release/retrieval/runs.jsonl          retriever rankings (unit keys only, no text)
   release/README.md                     data card (from docs/RELEASE_README.md)
   release/LICENSE-DATA.md               data licence (from docs/RELEASE_LICENSE.md)
   release/SHA256SUMS                    checksums of all of the above
@@ -65,6 +66,7 @@ EVAL_RUNS = {
 }
 # Repeat runs of the Claude conditions, for the run-to-run variance analysis.
 VARIANCE_RUNS = {str(p.as_posix()) for m in MODELS for c in (False, True) for p in run_paths(m, c)}
+RETRIEVAL_RUNS = Path("data/retrieval_runs.jsonl")
 PREDICTION_FILES = sorted({p for _, p in EVAL_RUNS.values()} | set(METHODS.values()) | VARIANCE_RUNS)
 
 
@@ -86,7 +88,7 @@ def queue_rows(path: Path) -> list[dict]:
 
 
 def export(out: Path) -> int:
-    missing = [p for p in [QUEUE, *LABEL_SETS.values(), *SNAPSHOTS.values(), *SAMPLES.values(), *PREDICTION_FILES]
+    missing = [p for p in [QUEUE, *LABEL_SETS.values(), *SNAPSHOTS.values(), *SAMPLES.values(), *PREDICTION_FILES, RETRIEVAL_RUNS]
                if not Path(p).exists()]
     if missing:
         print(f"error: missing inputs: {missing}", file=sys.stderr)
@@ -97,8 +99,10 @@ def export(out: Path) -> int:
     ids = {c["record_id"] for c in clauses}
     write_jsonl(out / "clauses.jsonl", clauses)
     shutil.copyfile("data/pilot_source_manifest.csv", out / "sources.csv")
-    shutil.copyfile("docs/RELEASE_README.md", out / "README.md")
-    shutil.copyfile("docs/RELEASE_LICENSE.md", out / "LICENSE-DATA.md")
+    for src, dest in (("docs/RELEASE_README.md", "README.md"), ("docs/RELEASE_LICENSE.md", "LICENSE-DATA.md")):
+        # LF regardless of checkout line endings, so the checksums are stable
+        text = Path(src).read_text(encoding="utf-8").replace("\r\n", "\n")
+        (out / dest).write_text(text, encoding="utf-8", newline="\n")
     for name, db in LABEL_SETS.items():
         write_jsonl(out / "labels" / f"{name}.jsonl", label_rows(Path(db)))
     for name, db in SNAPSHOTS.items():
@@ -111,6 +115,8 @@ def export(out: Path) -> int:
     for path in PREDICTION_FILES:
         rows = [r for r in E.load_pred(Path(path)).values() if r["record_id"] in ids]
         write_jsonl(out / "predictions" / Path(path).name, rows)
+    write_jsonl(out / "retrieval" / "runs.jsonl", [json.loads(line) for line in
+                RETRIEVAL_RUNS.read_text(encoding="utf-8").splitlines() if line.strip()])
     sums = sorted(f"{hashlib.sha256(p.read_bytes()).hexdigest()}  {p.relative_to(out).as_posix()}"
                   for p in out.rglob("*") if p.is_file())
     (out / "SHA256SUMS").write_text("\n".join(sums) + "\n", encoding="utf-8", newline="\n")

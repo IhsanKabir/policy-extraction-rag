@@ -23,6 +23,7 @@ and every analysis script, and checks each number against `results/*.json`.
 | `labels/annotator_a_relabel.jsonl` | A's blind relabel of 27 clauses (intra-annotator agreement) |
 | `labels/provenance/*.jsonl` | A's labels before each consistency pass, oldest first (label-provenance audit) |
 | `samples/*.jsonl` | the agreement sample, the relabel sample, and the relabel records not seen in adjudication |
+| `retrieval/runs.jsonl` | top-50 rankings of each retriever (BM25, dense, hybrid) per query, at clause and chunk level; units are given as keys (a hash of the normalised clause text, or the chunk id), not text |
 | `predictions/*.jsonl` | every system's output on these clauses; cited runs keep the model's pre-gate values (`model_raw_fields`) and the per-field grounding check (`grounding`) |
 | `SHA256SUMS` | checksums |
 
