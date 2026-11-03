@@ -8,6 +8,9 @@
 \usepackage{booktabs}
 \usepackage{enumitem}
 \usepackage{amsmath}
+\usepackage{tikz}
+\usetikzlibrary{positioning}
+\usepackage{amssymb}
 \usepackage[round]{natbib}
 \usepackage[hidelinks]{hyperref}
 \usepackage{url}
@@ -29,7 +32,7 @@ Citation-Grounded Extraction of Airline Refund and Change Conditions\\
 \maketitle
 
 \begin{abstract}
-Airline refund, cancellation and change conditions are published as fare rules and terms pages written in inconsistent semi-structured language, and travel agents still read them by hand. We release a pilot benchmark for extracting these conditions into a structured schema: 250 clauses from 12 public airline documents (11 carriers), of which 166 are labelled with 12 fields (topic, permission, penalty type, amount, currency, percentage, fare difference, time window, before/after departure, tax refund rule, eligibility conditions, exceptions) and 84 are marked as stating no rule. We compare a keyword rule baseline, a local 7B model (Qwen2.5-7B) and two frontier models (Claude Sonnet~5.5 and Opus~5.5), each with and without a \emph{citation} condition in which the model must quote the clause text supporting every value and a verbatim gate removes values whose quote is not found. The best system (Opus + citation + annotation guidelines) reaches 75.4 micro F1 [71.1, 79.1] against 48.6 for rules. An ablation separates the citation condition into its two parts. Asking for quotes improves the frontier models by 3 to 5 F1 points, significant against both annotators and the adjudicated labels and positive in every pairing of three repeated runs; the verbatim gate itself costs them nothing measurable but removes 18.6 points from the 7B model, which leaves 159 of its 303 values without any quote. Inter-annotator agreement is moderate (topic $\kappa = 0.51$; intra-annotator 0.82), and we report how much each claim depends on the annotator. Finally, placing the extractor behind a retriever costs much of that accuracy: the best system recovers 78.8\% of gold field values when given the right clause, but 45 to 51\% when it must first find the clause among the top five passages of the document.
+Airline refund, cancellation and change conditions are published as fare rules and terms pages written in inconsistent semi-structured language, and travel agents still read them by hand. We release a pilot benchmark for extracting these conditions into a 12-field schema: 250 clauses from 12 public airline documents (11 carriers), 166 labelled with fields and 84 marked as stating no rule. We compare a keyword rule baseline, a local 7B model (Qwen2.5-7B) and two frontier models (Claude Sonnet~5.5 and Opus~5.5), each with and without a \emph{citation} condition: the model quotes the clause text behind every value, and a gate removes values whose quote, or whose value within the quote, does not occur in the clause. The gate checks textual traceability, not whether the quote supports the value. Our main finding separates the two halves of this condition. Asking frontier models for quotes improves extraction by 3 to 5 F1 points; the gain holds against both annotators and the adjudicated labels, when whole documents rather than clauses are resampled, and in every pairing of three repeated runs, and the same request makes the models leave clauses without a rule empty more often. The gate itself moves their scores by less than one point but removes 18.6 points from the 7B model, which leaves half of its values without a quote. Absolute scores depend on the annotation: inter-annotator agreement is moderate (topic $\kappa = 0.51$); frontier models beat the rules against the primary annotator's labels but not against the second annotator's; and the best micro F1 (75.4, on clauses known to state a rule) is dominated by the topic and action fields. Over all 250 clauses, including those without a rule, the best systems reach 65 to 66 F1, and placed behind a retriever the best extractor recovers 45 to 51\% of gold field values instead of 79\%.
 \end{abstract}
 
 \section{Introduction}
@@ -48,10 +51,10 @@ Large language models can read this text, but an agent needs to know \emph{where
   \item \textbf{A comparison} of rules, a local 7B model and two frontier models under plain, citation, chunk-context and guideline prompts (Section~\ref{sec:methods}).
   \item \textbf{An ablation that separates citation prompting from citation enforcement} using each run's own pre-gate values (Section~\ref{sec:cite}). For frontier models the gain comes from asking for evidence; the verbatim gate is nearly free for them and harmful for a small model.
   \item \textbf{An audit of label provenance}: some gold labels were revised in consistency passes drafted with the help of one of the evaluated model families. We report every result on the untouched labels as well (Section~\ref{sec:provenance}).
-  \item \textbf{A retrieval check} that scores three retrievers against the same human labels and measures how much of the extractor's recall survives retrieval (Section~\ref{sec:retrieval}).
+  \item \textbf{Checks on what the scores mean}: per-field results with their support, scoring of the clauses without a rule, document-level resampling, and a retrieval step in front of the extractor (Sections~\ref{sec:fields}--\ref{sec:retrieval}).
 \end{itemize}
 
-This is a pilot: the scored set is small (132 records after near-duplicate removal, from 12 documents), and we treat it as evidence about effect directions and failure modes, not as a leaderboard.
+This is a pilot: the scored set is small (132 records after near-duplicate removal, from 12 documents), and the gold labels come mainly from one annotator. We treat the results as evidence about effect directions and failure modes, not as a leaderboard; the citation finding is the result that holds under every check we ran.
 
 \section{Related work}
 
@@ -70,6 +73,36 @@ This is a pilot: the scored set is small (132 records after near-duplicate remov
 Of 27 public documents collected \res{data/pilot_source_manifest.csv}, the labelling queue draws on 12 from 11 carriers: nine terms or conditions pages (Nok Air DD (two), Air Arabia G9, Malaysia Airlines MH, Qatar Airways QR, SpiceJet SG, Singapore Airlines SQ, Thai Airways TG, Oman Air WY), one fare-rule page (VietJet VZ), one policy bulletin (AirAsia AK) and one FAQ (Emirates EK). The other 15 are not in the benchmark: 7 travel-trade fare circulars were excluded as non-public trade documents; 7 public pages (six IndiGo fee tabs and one Bangkok Airways page) need a headless browser to render and yielded no parsed text; one Emirates page refused automated access and no saved copy was made. Snapshot dates recorded in the manifest are 2026-02-22/23 (VZ, DD, WY, G9, AK, SG) and 2026-10-28 (SQ, MH, QR, EK, TG); conditions change over time, so every label refers to its snapshot.
 
 Documents were chunked and split into atomic clauses. Fare-rule pages are tables flattened to text (``Changes in Flight: Charge fee of change and difference in fare, if any''), so the splitter first mines recurring field labels from the corpus and splits only at those labels; other text is split at sentence and list boundaries. The labelling queue holds 250 clauses: 177 from terms pages, 53 from fare rules, 20 from policy bulletins. For analysis we group the six carriers whose pages present conditions as fee tables or fare-rule rows (VZ, DD, G9, AK, SG, QR) as \emph{fare rule} and the rest as \emph{policy text}.
+
+\paragraph{Sampling.} The 250 queue clauses were drawn from a pool of 3,578 clauses in three ways (Table~\ref{tab:sources}). The first labelling round (62 clauses) covered the VietJet fare-rule page in full and 9 Nok Air clauses. Later rounds drew 181 clauses uniformly at random within each document, after removing fragments under 20 characters, failed splits over 700 characters, website chrome and exact duplicates. Because the random draw from the Singapore Airlines page returned only boilerplate, we added its 7 clauses that state a refund or cancellation rule by hand; this purposive addition is reported separately where it matters (Section~\ref{sec:retrieval}). Scoring removes near-duplicates (same normalised text, one contained in the other, or word overlap of at least 0.85), which mostly affects VietJet, whose fare-rule rows repeat across fare brands (46 labelled clauses, 24 scored). One document thus supplies 18\% of the scored clauses, which is why we also resample whole documents (Section~\ref{sec:robust}).
+
+\begin{table}[h]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{llrrrrrl}
+\toprule
+Carrier & Document & Pool & Queue & Labelled & Skipped & Scored & Selection \\
+\midrule
+VietJet VZ & fare rules & 53 & 53 & 46 & 7 & 24 & first round (all) \\
+AirAsia AK & policy bulletin & 67 & 20 & 12 & 8 & 10 & random \\
+Nok Air DD & terms (1) & 18 & 13 & 7 & 6 & 6 & 9 first round, 4 random \\
+Nok Air DD & terms (2) & 44 & 29 & 23 & 6 & 18 & random \\
+Air Arabia G9 & terms & 139 & 25 & 17 & 8 & 13 & random \\
+Qatar Airways QR & terms & 427 & 25 & 14 & 11 & 14 & random \\
+SpiceJet SG & terms & 319 & 8 & 3 & 5 & 3 & random \\
+Emirates EK & FAQ & 109 & 11 & 3 & 8 & 3 & random \\
+Malaysia Airlines MH & terms & 1,279 & 17 & 11 & 6 & 11 & random \\
+Singapore Airlines SQ & terms & 16 & 10 & 7 & 3 & 7 & 3 random, 7 purposive \\
+Thai Airways TG & terms & 108 & 13 & 9 & 4 & 9 & random \\
+Oman Air WY & terms & 999 & 26 & 14 & 12 & 14 & random \\
+\midrule
+Total & & 3,578 & 250 & 166 & 84 & 132 & \\
+\bottomrule
+\end{tabular}
+\caption{Clauses per document: in the clause pool, in the labelling queue, labelled or skipped by annotator A, and scored after near-duplicate removal.}
+\label{tab:sources}
+\end{table}
 
 \subsection{Schema and annotation}
 
@@ -113,15 +146,32 @@ After first entry, the gold went through consistency passes in which fixes were 
 
 \paragraph{Rule baseline.} Keyword and pattern rules mapping clause text to topic, action, penalty type and numeric fields.
 
-\paragraph{LLM extraction.} One request per clause with the schema and the rule ``never guess; null when the clause does not state it''. Qwen2.5-7B-Instruct runs locally through Ollama at temperature 0. Claude Sonnet~5.5 and Opus~5.5 run through the Message Batches API at low effort. Conditions:
+\paragraph{LLM extraction.} One request per clause with the schema and the rule ``never guess; null when the clause does not state it''; every model gets the same prompt text for a given condition. Qwen2.5-7B-Instruct (the default \texttt{qwen2.5:7b} build in the Ollama library) runs locally on CPU through Ollama with JSON output mode, temperature 0 and a 4,096-token context. Claude Sonnet~5.5 (\texttt{claude-sonnet-5-5}) and Opus~5.5 (\texttt{claude-opus-5-5}) run through the Message Batches API at low effort, without constrained decoding. Replies are parsed as JSON and coerced to the schema (enumerations validated, numbers parsed); an unparseable reply counts as an empty prediction. Conditions:
 \begin{itemize}
   \item \emph{plain}: clause text only;
-  \item \emph{+ cite}: the model must also return, for every non-null field, a verbatim quote from the clause; a local check normalises whitespace and case and keeps a value only if its quote occurs in the clause and, for numbers and text fields, the value occurs in the quote. Other values are set to null (the \emph{gate}). The model's pre-gate values are stored, which makes the ablation in Section~\ref{sec:cite} possible;
+  \item \emph{+ cite}: the model must also return, for every non-null field, a verbatim quote from the clause. A local check normalises whitespace and case and keeps a value only if its quote occurs in the clause and, for number and text fields, the value occurs in the quote as a whole number or whole words (so 20 does not match ``120''); list items must occur in the clause. Other values are set to null (the \emph{gate}). The gate establishes textual traceability: every surviving value can be found in the clause. It does not check that the quote means what the value says (Section~\ref{sec:example}). The model's pre-gate values are stored, which makes the ablation in Section~\ref{sec:cite} possible;
   \item \emph{+ ctx}: the parent chunk is shown as context, with values to be taken from the clause only;
   \item \emph{+ guide}: a 22-line summary of the annotation guide \res{docs/prompt_guidelines.txt} is added to the prompt.
 \end{itemize}
+Not every combination was run for every model (Table~\ref{tab:configs}), so comparisons between models use matched conditions only.
 
-\paragraph{Scoring.} For each field present in gold, a prediction is correct if it matches (categorical: exact; numbers: equal; time windows: equal durations; text: token F1 $\geq 0.5$). Predictions on fields that are empty in gold count as false positives. We report micro precision, recall and F1 over all fields, on gold with near-duplicate clauses removed (132 records: 88 fare rule, 44 policy text). Confidence intervals are 95\% bootstrap intervals over records (1,000 resamples); differences between systems use a paired bootstrap (2,000 resamples), and we call a difference significant (marked \sig) when its interval excludes zero.
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lcccccc}
+\toprule
+ & plain & + guide & + cite & + cite + ctx & + cite + guide & repeated runs \\
+\midrule
+Qwen 7B & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \\
+Sonnet 5.5 & \checkmark & & \checkmark & \checkmark & & plain, + cite (3 each) \\
+Opus 5.5 & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & plain, + cite (3 each) \\
+\bottomrule
+\end{tabular}
+\caption{Conditions run per model. Qwen + cite + ctx (26.3 F1 [20.6, 31.5]) is left out of Table~\ref{tab:main} because it does not differ from Qwen + cite.}
+\label{tab:configs}
+\end{table}
+
+\paragraph{Scoring.} For each field present in gold, a prediction is correct if it matches (categorical: exact; numbers: equal; text: token F1 $\geq 0.5$; time windows: equal durations). Two of these rules are lenient. Token overlap does not guarantee the same meaning for free-text conditions. And the gold time window records only the duration (the guide asks for it), so ``within 24 hours'' and ``at least 24 hours'' both match a gold value of 24 hours; the direction of a deadline is not scored. Predictions on fields that are empty in gold count as false positives. We report micro precision, recall and F1 over all fields, on gold with near-duplicate clauses removed (132 records: 88 fare rule, 44 policy text). Confidence intervals are 95\% bootstrap intervals over records (1,000 resamples); differences between systems use a paired bootstrap (2,000 resamples), and we call a difference significant (marked \sig) when its interval excludes zero. Section~\ref{sec:robust} repeats the key comparisons resampling whole documents.
 
 \section{Results}
 
@@ -161,7 +211,7 @@ Opus 5.5 + cite + guide & 72.7 & 78.2 & \textbf{75.4} [71.1, 79.1] & 87.1 & 79.5
 
 Paired differences (A's labels; full set / untouched): Opus over rules +17.1\sig{} / +11.8\sig{} [+5.1, +18.4]; Opus over Qwen +20.5\sig{} / +19.9\sig; Opus over Sonnet +2.1 / +0.4 (not significant); guidelines for Opus +6.8\sig{} / +5.2\sig.
 
-Frontier models beat the rule baseline by a wide margin on A's labels, and the margin shrinks but remains significant on untouched labels. The 7B model is no better than rules with a plain prompt; the guide summary raises it to 52.5 on all records but not on untouched ones (48.8, below rules at 50.7), so we make no claim for it. Sonnet and Opus are not distinguishable.
+Frontier models beat the rule baseline by a wide margin on A's labels, and the margin shrinks but remains significant on untouched labels; it does not hold against the second annotator's labels (Section~\ref{sec:annotator}). The 7B model is no better than rules with a plain prompt; the guide summary raises it to 52.5 on all records but not on untouched ones (48.8, below rules at 50.7), so we make no claim for it. Sonnet and Opus are not distinguishable.
 
 \subsection{Citation: asking versus enforcing}\label{sec:cite}
 
@@ -207,9 +257,9 @@ Gate effect, per run & +0.1 [$-0.3$, +0.4] & +0.2 [+0.0, +0.3] \\
 \label{tab:variance}
 \end{table}
 
-Every pairing of a cited run (gate off) with a plain run is positive for both models. The size of the effect varies with the runs paired: the single-run estimates in Table~\ref{tab:ablation} (+4.4 for Sonnet, +3.9 for Opus) lie within these ranges, and the three-run means are the better estimates. The gate effect stays within half a point in every run. Plain runs vary more than cited runs (sd 1.1 to 1.4 against 0.2 to 0.5).
+Every pairing of a cited run (gate off) with a plain run is positive for both models. The nine pairings reuse three runs per condition, so they show the spread of the effect rather than nine independent replications. The size of the effect varies with the runs paired: the single-run estimates in Table~\ref{tab:ablation} (+4.4 for Sonnet, +3.9 for Opus) lie within these ranges, and the three-run means are the better estimates. The gate effect stays within half a point in every run. Plain runs vary more than cited runs (sd 1.1 to 1.4 against 0.2 to 0.5).
 
-\subsection{Dependence on the annotator}
+\subsection{Dependence on the annotator}\label{sec:annotator}
 
 We rescored all systems on the 42 clauses both annotators labelled, against A, against B and against the adjudicated labels (Table~\ref{tab:annotator}) {\small[\path{results/v1c_iaa_summary_2026-11-01.md}; \path{results/v1c_error_analysis_summary_2026-11-02.md}, section 3]}.
 
@@ -234,6 +284,101 @@ Opus $-$ Qwen 7B & +20.4\sig & +9.5\sig & +21.5\sig \\
 
 The citation findings hold against every label set. The advantage of frontier models over rules does not hold against B alone: against B, no LLM condition is significantly better than rules. Models agree with A (0.70 to 0.76 F1) more than B does (0.52). This is consistent with the provenance audit and with B applying some guide rules differently (Section~\ref{sec:agreement}). We therefore present the LLM-over-rules result as conditional on the annotation and the citation result as the robust finding.
 
+\subsection{What the micro F1 measures}\label{sec:fields}
+
+Topic and action are filled in every scored record, so they make up 264 of the 444 gold values and dominate micro F1. The monetary fields are rare: 4 penalty amounts, 4 currencies and 1 percentage (Table~\ref{tab:fields}) \res{results/v1c_robustness.json}. Their scores rest on so few cases that we draw no conclusion from them, and the benchmark does not yet test the financial details that motivated it. We add three summaries fixed before computing them: macro F1 over the seven fields with at least 10 gold values; micro F1 over the ten value fields (everything except topic and action); and whole-record accuracy, the share of records with all 12 fields right and nothing spurious.
+
+\begin{table}[h]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lrrrrrr}
+\toprule
+Field & Gold & Rules & Qwen 7B & Sonnet + cite & Opus & Opus + cite + guide \\
+\midrule
+Policy topic & 132 & 73.5 & 49.8 & 83.1 & 87.5 & 87.5 \\
+Action & 132 & 51.5 & 38.0 & 58.5 & 67.5 & 79.8 \\
+Eligibility conditions & 62 & 18.9 & 34.4 & 50.0 & 43.4 & 53.4 \\
+Penalty type & 44 & 20.0 & 33.3 & 61.0 & 66.7 & 76.6 \\
+Before/after departure & 22 & 46.7 & 45.7 & 63.6 & 37.5 & 52.5 \\
+Time window & 19 & 13.3 & 86.5 & 80.0 & 72.0 & 76.6 \\
+Fare difference required & 15 & 23.5 & 93.3 & 100.0 & 96.6 & 96.6 \\
+Tax refund rule & 6 & 25.0 & 50.0 & 40.0 & 50.0 & 40.0 \\
+Penalty amount & 4 & 20.0 & 60.0 & 72.7 & 66.7 & 80.0 \\
+Penalty currency & 4 & 20.0 & 46.2 & 46.2 & 33.3 & 37.5 \\
+Exceptions & 3 & 20.0 & 0.0 & 40.0 & 30.8 & 40.0 \\
+Penalty percentage & 1 & 0.0 & 66.7 & 100.0 & 100.0 & 100.0 \\
+\midrule
+Micro F1 (all fields) & 444 & 48.6 & 45.2 & 67.6 & 65.6 & 75.4 \\
+Macro F1 (7 fields, $\geq 10$ gold) & & 35.4 & 54.4 & 70.9 & 67.3 & 74.7 \\
+Micro F1 (value fields) & 180 & 21.8 & 46.5 & 62.0 & 53.4 & 64.3 \\
+Whole-record accuracy & 132 & 9.1 & 6.1 & 12.1 & 12.1 & 33.3 \\
+\bottomrule
+\end{tabular}
+\caption{F1 per field ($\times$100) with the number of gold values, and three summaries, against annotator A on the 132 scored records.}
+\label{tab:fields}
+\end{table}
+
+Opus + cite + guide stays best on every summary, but the summaries show how much the headline hides. The rule baseline's micro F1 of 48.6 comes mostly from topic and action: on the value fields it scores 21.8, below the 7B model (46.5). The best system gets all 12 fields of a record right a third of the time. Free-text eligibility conditions, the largest value field, reach at most 53.4 for any system.
+
+\subsection{Clauses without a rule}\label{sec:norule}
+
+The scores so far use only the clauses A labelled. A deployed extractor also sees the 84 clauses A skipped as stating no rule, where every extracted value is wrong. We ran each Claude condition on these clauses with the same prompts and settings (Qwen runs are pending) and scored all clauses together: 132 with a rule and 75 without, after removing near-duplicates \res{results/v1c_rule_detection.json}. A system \emph{predicts a rule} when it fills any field; we fixed this definition before the runs.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lrrrrr}
+\toprule
+ & Rule F1 & Specificity & Values on & F1, rule & F1, all clauses \\
+ & & & no-rule clauses & clauses only & [document CI] \\
+\midrule
+Rule baseline & 77.9 & 0.0 & 158 & 48.6 & 40.6 [35.6, 45.5] \\
+Sonnet 5.5 & 83.8 & 32.0 & 69 & 63.5 & 59.4 [54.8, 63.8] \\
+Sonnet 5.5 + cite & 86.5 & 57.3 & 34 & 67.6 & 65.0 [59.5, 70.8] \\
+Sonnet 5.5 + cite + ctx & 85.1 & 40.0 & 53 & 70.5 & 66.4 [61.1, 70.8] \\
+Opus 5.5 & 80.5 & 14.7 & 179 & 65.6 & 55.9 [49.1, 61.6] \\
+Opus 5.5 + cite & 82.8 & 26.7 & 77 & 69.7 & 64.3 [57.0, 70.0] \\
+Opus 5.5 + guide & 78.6 & 4.0 & 185 & 72.5 & 60.8 [50.3, 69.9] \\
+Opus 5.5 + cite + ctx & 83.8 & 32.0 & 71 & 70.5 & 65.4 [57.9, 71.2] \\
+Opus 5.5 + cite + guide & 79.0 & 6.7 & 149 & 75.4 & 64.9 [55.5, 72.7] \\
+\bottomrule
+\end{tabular}
+\caption{Rule detection and field F1 including the clauses without a rule ($\times$100; 132 clauses with a rule, 75 without). Specificity is the share of no-rule clauses left empty.}
+\label{tab:norule}
+\end{table}
+
+Two results stand out (Table~\ref{tab:norule}). First, asking for quotes makes the models leave no-rule clauses empty more often (Sonnet from 32\% to 57\%, Opus from 15\% to 27\%), which is consistent with the precision gain in Section~\ref{sec:cite}. Second, the guide condition does the opposite: with it, Opus fills a field on 93 to 96\% of no-rule clauses, and over all clauses the best system on rule clauses (75.4) falls to 64.9, level with Sonnet + cite + ctx (66.4) and Opus + cite + ctx (65.4). Most of these values are topic \texttt{other} with action \texttt{unknown} (59 of the 84 clauses for Opus + cite + guide), which reads as ``nothing here'' in schema terms. Counting that pattern as no rule, a definition we chose after seeing the outputs, raises the guide-prompted specificity to 39\% (Opus + guide) and 73\% (Opus + cite + guide). Either way, the ranking of the best systems depends on whether clauses without a rule are scored, and the gain from the guide summary is partly a cost on those clauses.
+
+\subsection{Document-level robustness}\label{sec:robust}
+
+The 132 scored clauses come from 12 documents, and clauses of one document share wording, so intervals from resampling clauses can be too narrow for new documents. Table~\ref{tab:robust} repeats the key comparisons with a document-level (cluster) bootstrap and gives the range of each difference when one document at a time is left out \res{results/v1c_robustness.json}.
+
+\begin{table}[h]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lrlll}
+\toprule
+Claim & $\Delta$ & Document CI & Leave one out & Untouched: $\Delta$ [document CI] \\
+\midrule
+Citation prompt, Sonnet & +4.4 & [+1.9, +6.9]\sig & [+3.5, +5.0] & +4.1 [+1.0, +7.6]\sig \\
+Citation prompt, Opus & +3.9 & [+0.8, +6.3]\sig & [+2.9, +4.5] & +3.7 [+0.6, +6.9]\sig \\
+Citation prompt, Opus + guide & +2.8 & [+0.04, +6.1]\sig & [+1.8, +3.8] & +4.9 [+1.9, +8.0]\sig \\
+Gate, Qwen 7B & $-18.6$ & [$-26.3$, $-8.9$]\sig & [$-20.2$, $-15.5$] & $-16.2$ [$-25.5$, $-8.1$]\sig \\
+Gate, Sonnet & $-0.3$ & [$-1.4$, +0.5] & [$-0.6$, 0.0] & $-0.6$ [$-2.1$, +0.5] \\
+Gate, Opus & +0.2 & [0.0, +0.7] & [0.0, +0.3] & +0.3 [0.0, +0.9] \\
+Opus $-$ rules & +17.1 & [+8.7, +26.9]\sig & [+12.5, +18.9] & +11.8 [+3.9, +18.8]\sig \\
+Opus + cite + guide $-$ rules & +26.8 & [+16.4, +36.3]\sig & [+22.6, +29.4] & +21.9 [+13.3, +29.8]\sig \\
+Opus $-$ Qwen 7B & +20.5 & [+13.5, +31.0]\sig & [+18.9, +23.0] & +19.9 [+9.0, +31.4]\sig \\
+\bottomrule
+\end{tabular}
+\caption{Key differences in F1 ($\times$100) against annotator A, with document-level bootstrap intervals (2,000 resamples of the 12 documents) and the range over leaving out each document.}
+\label{tab:robust}
+\end{table}
+
+Document-level intervals are wider, as expected, but every claim keeps its sign and significance. The citation-prompt effect for Opus + guide is borderline on all records (lower bound +0.04) and clear on untouched records. No single document drives any of the effects. This addresses dependence within documents only; with 12 documents from 11 carriers, generalisation to other carriers remains untested, and these comparisons are all against annotator A.
+
 \subsection{Error analysis}
 
 For the best system (Opus + cite + guide) \res{results/v1c_error_analysis.json}:
@@ -243,6 +388,49 @@ For the best system (Opus + cite + guide) \res{results/v1c_error_analysis.json}:
   \item \textbf{Change versus other.} Name-change fees and upgrade terms that mention change fees are labelled \texttt{other} (5).
   \item \textbf{Eligibility conditions.} Free-text lists are the noisiest field to score (16 wrong, 15 missed) and the one the gate removes most.
 \end{enumerate}
+
+\paragraph{A worked example.}\label{sec:example} Figure~\ref{fig:pipeline} shows the pipeline, and Table~\ref{tab:example} one clause from the benchmark as Opus + cite processed it. Every quote occurs in the clause, so the gate keeps every value. Four of the five values are right. The fifth restates the whole rule as an eligibility condition; it is quoted verbatim and passes the gate, but the gold leaves the field empty, so it is scored as spurious. The time window shows the leniency of the scorer: the prediction says ``at least 24 hours'', the gold records 24 hours, and the match ignores the direction.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[node distance=0.45cm, every node/.style={font=\footnotesize},
+  box/.style={draw, rounded corners=2pt, align=center, inner sep=4pt, minimum height=0.9cm}]
+\node[box] (clause) {Clause\\text};
+\node[box, right=of clause] (llm) {LLM: 12 fields\\+ a quote per field};
+\node[box, right=of llm] (gate) {Gate: quote in clause?\\value in quote?};
+\node[box, right=of gate] (out) {Fields kept\\(gate on)};
+\node[box, below=0.6cm of gate] (raw) {Fields before gate\\(gate off)};
+\node[box, right=of out] (score) {Scored against\\human labels};
+\draw[->] (clause) -- (llm);
+\draw[->] (llm) -- (gate);
+\draw[->] (gate) -- (out);
+\draw[->] (out) -- (score);
+\draw[->] (llm.south) |- (raw.west);
+\draw[->] (raw.east) -| (score.south);
+\end{tikzpicture}
+\caption{The citation condition. The model's values are stored before the gate, so each cited run can be scored with the gate on and off.}
+\label{fig:pipeline}
+\end{figure}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{p{2.3cm}p{2.0cm}p{4.4cm}l}
+\toprule
+\multicolumn{4}{p{12.5cm}}{Clause: ``The flight change must be made at least 24 hours prior to the original departure time.''} \\
+\midrule
+Field & Gold & Prediction (all quotes found in the clause) & Scored \\
+\midrule
+Policy topic & reissue/change & reissue/change & correct \\
+Action & conditional & conditional & correct \\
+Before/after & before departure & before departure & correct \\
+Time window & 24 hours & ``at least 24 hours prior to the original departure time'' & correct (duration only) \\
+Eligibility & (empty) & ``The flight change must be made at least 24 hours prior to the original departure time'' & spurious \\
+\bottomrule
+\end{tabular}
+\caption{One clause, Opus + cite. The gate keeps all five values; one is wrong.}
+\label{tab:example}
+\end{table}
 
 \subsection{Retrieval before extraction}\label{sec:retrieval}
 
@@ -269,13 +457,15 @@ Chunk & 1 & 11.2 & 21.7 & 19.3 & 24.1 \\
 \label{tab:retrieval}
 \end{table}
 
-Retrieval is the weakest step (Table~\ref{tab:retrieval}). The intervals are wide (clause hybrid at $k=10$: 43.4 [27.9, 58.8]; chunk BM25 at $k=5$: 65.1 [44.2, 79.7]) and do not separate the three retrievers. Two kinds of clause are hard to find. Many relevant clauses are fragments of a longer rule (``the payment according to this channel dues immediately at change\ldots''), which share few words with any query; retrieving chunks instead of clauses helps them. And long documents bury them: in the longest (1,161 clauses), four of its five relevant clauses are not in the hybrid clause ranking's top 50, and in the second longest (945) both relevant clauses rank below 35. On the uniformly sampled clauses alone, recall is lower in every cell of Table~\ref{tab:retrieval}, by up to 18 points (chunk BM25 at $k=5$: 53.4), so the v1 and purposive records were easier to find than a typical clause. Even with the best retriever, 30\% of queries have none of their relevant clauses in the top five chunks. Among retrieved clauses that A had judged, 64 to 100\% were relevant at $k \leq 10$, but most retrieved clauses were never judged.
+Retrieval loses many relevant clauses (Table~\ref{tab:retrieval}). The intervals are wide (clause hybrid at $k=10$: 43.4 [27.9, 58.8]; chunk BM25 at $k=5$: 65.1 [44.2, 79.7]) and do not separate the three retrievers. Two kinds of clause are hard to find. Many relevant clauses are fragments of a longer rule (``the payment according to this channel dues immediately at change\ldots''), which share few words with any query; retrieving chunks instead of clauses helps them. And long documents bury them: in the longest (1,161 clauses), four of its five relevant clauses are not in the hybrid clause ranking's top 50, and in the second longest (945) both relevant clauses rank below 35. On the uniformly sampled clauses alone, recall is lower in every cell of Table~\ref{tab:retrieval}, by up to 18 points (chunk BM25 at $k=5$: 53.4), so the v1 and purposive records were easier to find than a typical clause. Even with the best retriever, 30\% of queries have none of their relevant clauses in the top five chunks. Among retrieved clauses that A had judged, 64 to 100\% were relevant at $k \leq 10$, but most retrieved clauses were never judged.
 
 End to end, an extraction counts only if its clause was retrieved. Given the right clause, Opus + cite + guide recovers 78.8\% of the gold field values of these 83 clauses (rules: 42.1\%). Behind a retriever it recovers 30.5 to 37.0\% with ten clauses and 45.3 to 51.4\% with five chunks, depending on the retriever. Retrieval costs 27 to 48 points of field recall, comparable to the 37-point gap between the rule baseline and the best LLM given the right clause.
 
 \section{Discussion}
 
-\paragraph{Ask for evidence, but check the format before enforcing it.} For capable models, a citation request is a cheap precision gain and a verbatim gate adds a guarantee (every surviving value has a supporting quote) at almost no cost. For a small model the same gate silently deletes most of the output. A deployment that enforces citations should measure quote compliance first; a fallback (re-asking for the missing quote, or flagging rather than deleting) would avoid the 7B collapse. We did not test such fallbacks.
+\paragraph{Ask for evidence, but check the format before enforcing it.} For capable models, a citation request is a cheap precision gain, and it also makes them leave clauses without a rule empty more often. A verbatim gate then adds traceability at almost no cost: every surviving value can be found in the clause. It does not add correctness, since a real quote can sit next to a wrong value (Table~\ref{tab:example}); checking that a quote entails the value would need a semantic test that we did not build. For the 7B model the gate deletes most of the output, but the cause is the output format: half of its values come without any quote. This shows that enforcing a format the model does not follow is harmful, not that small models cannot extract with evidence. Constrained decoding, re-asking for a missing quote, or flagging instead of deleting might avoid the collapse; we did not test them.
+
+\paragraph{Score the whole task.} The best configuration on clauses known to state a rule (Opus + cite + guide) loses its lead once clauses without a rule are scored, because the guide summary makes the model fill fields on almost every clause. Benchmarks of this kind should score rule detection and extraction together, or a system can look best by never abstaining.
 
 \paragraph{Agreement is the bottleneck.} Moderate human agreement (topic $\kappa = 0.51$) caps what any system score means. The disagreements cluster in a few guide decisions: how to treat fare-table cells, whether an unstated penalty type is \texttt{unknown} or empty, and when a stated fee makes an action \texttt{conditional}. Those are the guide changes to make before scaling the dataset.
 
@@ -283,20 +473,22 @@ End to end, an extraction counts only if its clause was retrieved. Given the rig
 
 \begin{itemize}
   \item Small scale: 132 scored records from 12 documents and 11 carriers, English only. Confidence intervals are wide, and several differences (Opus vs Sonnet, ctx and guide combinations on the 42-record subset) are not resolved.
-  \item One primary annotator, who is also the author; the second annotation covers 50 clauses and was produced with a colleague's help; adjudication mostly kept the author's values.
+  \item One primary annotator, who is also the author; the second annotation covers 50 clauses and was produced with a colleague's help; adjudication mostly kept the author's values. No annotator was a fare-rules specialist, and the guide was amended once during the agreement study.
   \item Some gold labels were revised in passes drafted with help from Claude, one of the evaluated model families. We report untouched-label results, but the audit cannot detect influence at first entry.
-  \item Three runs per condition only for the plain and cited Claude conditions (Section~\ref{sec:cite}); all other conditions, including Qwen and the guide and context variants, have one run. No variation of prompt wording was tested.
+  \item The schema's monetary fields are almost untested (4 amounts, 4 currencies, 1 percentage), and tiered penalties and refund payout options, which the guide describes, are not scored.
+  \item The scorer ignores the direction of a deadline (``within'' versus ``at least''), and token overlap of at least 0.5 can accept a free-text condition with a different meaning. The gate checks textual traceability only; no sample of accepted citations was checked by a person for whether the quote supports the value.
+  \item Three runs per condition only for the plain and cited Claude conditions (Section~\ref{sec:cite}); all other conditions, including Qwen and the guide and context variants, have one run. No variation of prompt wording was tested, and not all conditions were run for every model (Table~\ref{tab:configs}). Qwen was not run on the clauses without a rule.
   \item Retrieval is evaluated only for recall, with 23 queries and one fixed wording per topic, on labels that cover 7\% of each document; precision and answer quality after retrieval are not measured.
   \item Clause segmentation is fixed and imperfect; some clauses are fragments of tables.
 \end{itemize}
 
 \section{Conclusion}
 
-On a pilot benchmark of airline refund and change conditions, frontier models extract structured conditions far better than a 7B model, and better than rules against the primary annotator's labels. Asking them to quote their evidence improves extraction by three to five F1 points, robustly across annotators and repeated runs, while enforcing verbatim quotes costs them nothing measurable and breaks a small model that does not supply quotes. Placed behind a retriever, the same extractor loses a third to more than half of that recall, so retrieval needs as much attention as extraction. The data, guide, agreement study, retriever rankings and scripts are released to support a larger benchmark.
+On a pilot benchmark of airline refund and change conditions, asking frontier models to quote their evidence improves extraction by three to five F1 points, and the gain holds against both annotators, under document-level resampling and across repeated runs. Enforcing verbatim quotes costs those models nothing measurable and breaks a 7B model that does not supply quotes in the required format. Other conclusions are weaker: frontier models beat rules against the primary annotator's labels but not the second annotator's, the headline score is dominated by two classification fields, the best configuration loses its lead when clauses without a rule are scored, and behind a retriever the best extractor loses a third to more than half of its recall. An independently annotated evaluation set, with more monetary conditions, is the next step. The data, guide, agreement study, predictions, retriever rankings and scripts are released to support it.
 
 \section*{Reproducibility}
 
-Code and data: \url{https://github.com/IhsanKabir/policy-extraction-rag}. The \texttt{release/} folder holds the clauses, all label sets (including the pre-fix snapshots used by the provenance audit), the samples, every system's predictions and the retriever rankings. \texttt{python scripts/reproduce.py} rebuilds the working files from it alone, reruns the scorer and every analysis script, and checks each reported number against the committed results; bootstrap seeds are fixed, so the check is exact. All Claude runs together cost USD 9.19 through the Message Batches API (5.01 for the main runs, 4.18 for the repeats).
+Code and data: \url{https://github.com/IhsanKabir/policy-extraction-rag}. The \texttt{release/} folder holds the clauses, all label sets (including the pre-fix snapshots used by the provenance audit), the samples, every system's predictions and the retriever rankings. \texttt{python scripts/reproduce.py} rebuilds the working files from it alone, reruns the scorer and every analysis script on the saved predictions, and checks every results file against the committed one; bootstrap seeds are fixed, so the check is exact. This reproduces the metrics, not the model outputs: rerunning inference uses \texttt{extractors/} with the same prompts and settings, but hosted models can change behind a fixed name, so new outputs may differ. \texttt{scripts/regate\_check.py} re-applies the citation gate to every stored model reply and confirms the stored predictions. Dependency versions are pinned in \texttt{requirements-paper.txt}. All Claude runs together cost USD 11.28 through the Message Batches API (5.01 for the main runs, 4.18 for the repeats, 2.09 for the clauses without a rule).
 
 \paragraph{Data statement.} The clauses come from pages airlines publish so that passengers can read the conditions before buying. Copyright in the text remains with the carriers. We release the labels, source URLs, snapshot dates and clause text for research use, with attribution, and will remove any carrier's text on request. Code is released under MIT and the annotations under CC BY 4.0; the clause text is not covered by either licence.
 

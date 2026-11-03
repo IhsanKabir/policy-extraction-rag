@@ -1,57 +1,53 @@
-# Travel Policy Extraction RAG
+# Citation-grounded extraction of airline refund and change conditions
 
-Production-grade RAG system for travel fare-rule and penalty policy intelligence across airlines and suppliers.
+Code and data for the paper *Asking for Evidence Helps, Enforcing It Can Hurt:
+Citation-Grounded Extraction of Airline Refund and Change Conditions (A Pilot
+Benchmark)* ([`paper/main.tex`](paper/main.tex)).
 
-Primary use cases:
-- Refund eligibility and penalties
-- Reissue/change conditions
-- No-show / go-show clauses
-- Cancellation windows
-- Waivers and exceptions
-- Offer/circular-specific conditions
+The benchmark has 250 clauses from 12 public airline documents (11 carriers):
+166 labelled with a 12-field schema (topic, action, penalty type, amount,
+currency, percentage, fare difference, time window, before/after departure,
+tax refund rule, eligibility conditions, exceptions) and 84 marked as stating
+no rule. It compares a keyword rule baseline, Qwen2.5-7B and Claude Sonnet 5.5
+and Opus 5.5, with and without a citation condition (quote every value; a
+gate removes values whose quote is not in the clause), and separates the
+effect of asking for quotes from the effect of enforcing them.
 
-## Initial Scope
+**Status:** pilot. The gold labels come mainly from one annotator (the
+author), with a 50-clause second-annotator study; see the paper's
+Limitations section before relying on any absolute score.
 
-- Ingest fare rules, airline offers, supplier offers, circulars, waivers, and policy bulletins
-- Extract structured policy fields and metadata
-- Index content for hybrid retrieval (vector + BM25)
-- Answer questions with source citations
+## Reproduce the results
 
-## Repo Structure
+```bash
+pip install -r requirements-paper.txt     # only needed for extraction runs and tests
+python scripts/reproduce.py               # rebuilds everything from release/, checks every results file
+python scripts/regate_check.py            # re-applies the citation gate to every stored model reply
+python scripts/check_paper_numbers.py     # traces every number in paper/main.tex to a results file
+python -m pytest tests
+```
 
-- `api/` FastAPI service for ask/search endpoints
-- `ingestion/` parsers and normalization pipeline
-- `extractors/` structured policy extraction logic
-- `web/` minimal UI (chat + citations)
-- `evals/` datasets and evaluation scripts
-- `data/` manifests and local data folders
-- `docs/` schema, plans, and design notes
+`reproduce.py` uses only the standard library and this repository. It
+reproduces the metrics from the saved predictions; rerunning the models
+(`extractors/claude_batch.py`, `extractors/llm_pipeline.py`) uses the same
+prompts and settings, but hosted models can change behind a fixed name.
 
-## First Milestone
+## Layout
 
-1. Ingest 20-30 pilot documents
-2. Extract metadata into a canonical schema
-3. Chunk and index documents
-4. Ask one query and return a grounded answer with correct citations
+| Path | Contents |
+|---|---|
+| `release/` | the benchmark: clauses, all label sets, provenance snapshots, samples, every system's predictions, retriever rankings, checksums ([data card](release/README.md)) |
+| `paper/` | the paper source and the number allowlist |
+| `docs/LABELING_GUIDE.md` | the annotation guide |
+| `evals/v1b_eval.py` | the scorer |
+| `extractors/` | LLM extraction (Ollama and Claude Message Batches), prompts, citation gate |
+| `scripts/` | agreement, adjudication, provenance audit, error analysis, variance, retrieval, rule detection, robustness, release export and reproduction |
+| `results/` | committed results; `reproduce.py` checks them |
+| `api/`, `web/`, `ingestion/` | the earlier retrieval and labelling prototype the data was collected with |
 
-## Labeling Worksheet (How To Use)
+## Licences
 
-Use `docs/real-pilot-labeling-session-worksheet.md` during real-pilot manual labeling sessions.
-
-Recommended flow:
-1. Ingest real pilot docs into `data/chunks.jsonl`
-2. Run heuristic extraction into `data/policy_clauses.jsonl`
-3. Generate the labeling queue: `python -m evals.real_pilot_labeling queue`
-4. Open the labeling UI at `http://127.0.0.1:8000/labeling`
-5. Label 30-50 clauses using the worksheet checklist
-6. Compare heuristic vs manual gold: `python -m evals.real_pilot_labeling compare`
-
-The worksheet includes a 30-clause target plan, source coverage tracker, skip log, and mismatch review template.
-
-## Next Priorities
-
-- Add real pilot documents to `data/raw/` and complete `data/pilot_source_manifest.csv`
-- Generate `data/chunks.jsonl` and `data/policy_clauses.jsonl` from real sources
-- Create a real-pilot manual labeling queue (`python -m evals.real_pilot_labeling queue`)
-- Label 30-50 real clauses in the labeling UI and run `python -m evals.real_pilot_labeling compare`
-- Improve heuristics from mismatch analysis, then add an LLM-assisted extraction pass for hard cases
+Code: MIT ([`LICENSE`](LICENSE)). Annotations and model outputs: CC BY 4.0
+([`release/LICENSE-DATA.md`](release/LICENSE-DATA.md)). The airline clause
+text is not covered by either licence; copyright stays with the carriers, and
+any carrier's text will be removed on request.

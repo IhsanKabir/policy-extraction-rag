@@ -1,0 +1,24 @@
+# Numbers in main.tex that are not in results/*.json, each with where it comes from.
+# Format: <number> <reason>. Checked by scripts/check_paper_numbers.py.
+2026 date of the paper
+510 CUAD contract count, from Hendrycks et al. (2021)
+177 queue clauses from terms pages (sum of the terms rows in Table sources)
+3578 clauses in data/policy_clauses_fine.jsonl
+181 queue clauses drawn uniformly at random (250 - 62 first round - 7 purposive)
+427 Qatar Airways clauses in the pool (data/policy_clauses_fine.jsonl)
+319 SpiceJet clauses in the pool
+1279 Malaysia Airlines clauses in the pool
+999 Oman Air clauses in the pool
+4096 Ollama num_ctx in extractors/llm_pipeline.py
+159 Qwen values without a quote, results/v1c_error_analysis_summary_2026-11-02.md
+303 Qwen asserted values (86 grounded + 159 + 10 + 6 + 42), same file
+264 gold values of topic and action (132 + 132), results/v1c_robustness.json supports
+444 sum of field supports in results/v1c_robustness.json
+180 value-field gold values (444 - 264)
+225 THB amount quoted from a benchmark clause
+1161 longest document's clause pool after exact-duplicate removal (data/retrieval_runs.jsonl pool_size)
+945 second-longest document's pool, same file
+11.28 total Claude cost (5.01 + 4.18 + 2.09)
+5.01 main Claude runs, as billed (reported by the author)
+4.18 repeat runs, sum of actual_usd in results/variance/run_*.log
+2.09 no-rule runs, sum of actual_usd in results/norule/run_*.log

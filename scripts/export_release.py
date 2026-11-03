@@ -67,7 +67,11 @@ EVAL_RUNS = {
 # Repeat runs of the Claude conditions, for the run-to-run variance analysis.
 VARIANCE_RUNS = {str(p.as_posix()) for m in MODELS for c in (False, True) for p in run_paths(m, c)}
 RETRIEVAL_RUNS = Path("data/retrieval_runs.jsonl")
-PREDICTION_FILES = sorted({p for _, p in EVAL_RUNS.values()} | set(METHODS.values()) | VARIANCE_RUNS)
+# Claude runs on the 84 clauses A marked as stating no rule, for scripts/rule_detection.py.
+NORULE_RUNS = {f"data/v1b_llm_{run}_norule.jsonl" for run in (
+    "sonnet55", "cited_sonnet55", "cited_ctx_sonnet55", "opus55", "cited_opus55", "guided_opus55",
+    "cited_ctx_opus55", "cited_guided_opus55")}
+PREDICTION_FILES = sorted({p for _, p in EVAL_RUNS.values()} | set(METHODS.values()) | VARIANCE_RUNS | NORULE_RUNS)
 
 
 def write_jsonl(path: Path, rows: list[dict]) -> None:

@@ -89,7 +89,9 @@ def commands(snapshots: dict[str, Path]) -> list[list[str]]:
                     "--out", "results/v1c_self_relabel_unseen.json"],
              py + [s("error_analysis.py"), "--examples", "handoff/error_examples.md"],
              py + [s("variance_analysis.py")],
-             py + [s("retrieval_eval.py")]]
+             py + [s("retrieval_eval.py")],
+             py + [s("rule_detection.py")],
+             py + [s("robustness_analysis.py")]]
     return cmds
 
 

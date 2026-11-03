@@ -1,0 +1,13 @@
+# Pinned environment for the paper's scripts (scoring, analyses, reproduce.py,
+# extraction via extractors/). Tested with Python 3.13.13 on Windows 11.
+# reproduce.py itself needs only the standard library plus this repo; the
+# packages below are for the extraction runs, the retriever and the tests.
+anthropic==0.104.1
+openpyxl==3.1.5
+sentence-transformers==5.5.1
+transformers==5.9.0
+torch==2.12.0
+python-dotenv==1.2.2
+pydantic==2.13.4
+numpy==2.4.6
+pytest==9.0.3
