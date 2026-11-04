@@ -16,7 +16,7 @@ and every analysis script, and checks each number against `results/*.json`.
 | Path | Contents |
 |---|---|
 | `clauses.jsonl` | 250 clauses: `record_id`, source and document ids, carrier, document type, `clause_text`, and `chunk_text` (the parent chunk, used only by the `+ ctx` condition) |
-| `sources.csv` | the 27 collected sources with URL, snapshot date and status; 12 of them supply the clauses |
+| `sources.csv` | the 20 public sources collected, with URL, snapshot date and status; 12 of them supply the clauses (7 non-public trade circulars that were collected and excluded are not listed) |
 | `labels/annotator_a.jsonl` | gold: annotator A's labels for all 250 clauses (166 labelled, 84 `skip`) |
 | `labels/annotator_b_iaa.jsonl` | annotator B's blind labels for the 50-clause agreement sample |
 | `labels/adjudicated.jsonl` | the 50-clause sample after A and B resolved every disagreement |
